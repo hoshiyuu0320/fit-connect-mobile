@@ -1,0 +1,71 @@
+name: fit_connect_mobile
+description: "FIT-CONNECT クライアント向けモバイルアプリ"
+publish_to: 'none'
+version: 1.0.0+1
+
+environment:
+  sdk: '>=3.5.0 <4.0.0'
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+  # 状態管理
+  flutter_riverpod: ^2.6.1
+  riverpod_annotation: ^2.5.0
+
+  # Supabase連携
+  supabase_flutter: ^2.9.1
+
+  # UI・アニメーション
+  confetti: ^0.7.0  # 目標達成時の紙吹雪
+  fl_chart: ^0.70.1  # グラフ表示
+
+  # 画像処理
+  image_picker: ^1.1.2
+  image_cropper: ^8.0.2
+  cached_network_image: ^3.4.1
+
+  # ユーティリティ
+  intl: ^0.19.0  # 日付フォーマット
+  url_launcher: ^6.3.1  # URL起動
+  share_plus: ^10.1.1  # 共有機能
+  path_provider: ^2.1.5  # ファイルパス取得
+
+  # QRコード
+  mobile_scanner: ^5.2.3  # QRコードスキャン
+  qr_flutter: ^4.1.0  # QRコード生成（デバッグ用）
+
+  # プッシュ通知
+  firebase_core: ^3.8.1
+  firebase_messaging: ^15.1.5
+
+  # その他
+  flutter_dotenv: ^5.2.1  # 環境変数
+  logger: ^2.5.0  # ログ出力
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+
+  # Linter
+  flutter_lints: ^5.0.0
+
+  # Code Generation
+  build_runner: ^2.4.13
+  riverpod_generator: ^2.5.0
+  json_serializable: ^6.9.2
+
+flutter:
+  uses-material-design: true
+
+  # assets:
+  #   - assets/images/
+  #   - .env
+
+  # fonts:
+  #   - family: NotoSansJP
+  #     fonts:
+  #       - asset: assets/fonts/NotoSansJP-Regular.ttf
+  #       - asset: assets/fonts/NotoSansJP-Bold.ttf
+  #         weight: 700
