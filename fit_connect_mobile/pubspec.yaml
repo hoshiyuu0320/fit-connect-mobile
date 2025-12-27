@@ -18,31 +18,32 @@ dependencies:
   supabase_flutter: ^2.9.1
 
   # UI・アニメーション
-  confetti: ^0.7.0  # 目標達成時の紙吹雪
-  fl_chart: ^0.70.1  # グラフ表示
+  confetti: ^0.7.0
+  fl_chart: ^0.70.1
 
   # 画像処理
   image_picker: ^1.1.2
   image_cropper: ^8.0.2
   cached_network_image: ^3.4.1
 
-  # ユーティリティ
-  intl: ^0.19.0  # 日付フォーマット
-  url_launcher: ^6.3.1  # URL起動
-  share_plus: ^10.1.1  # 共有機能
-  path_provider: ^2.1.5  # ファイルパス取得
-
   # QRコード
-  mobile_scanner: ^5.2.3  # QRコードスキャン
-  qr_flutter: ^4.1.0  # QRコード生成（デバッグ用）
+  # mobile_scanner: ^5.1.1
+  # qr_flutter: ^4.1.0
 
-  # プッシュ通知
+  # Firebase
   firebase_core: ^3.8.1
   firebase_messaging: ^15.1.5
+  flutter_local_notifications: ^18.0.1
+
+  # 環境変数
+  flutter_dotenv: ^5.2.1
 
   # その他
-  flutter_dotenv: ^5.2.1  # 環境変数
-  logger: ^2.5.0  # ログ出力
+  intl: ^0.19.0
+  url_launcher: ^6.3.1
+  share_plus: ^10.1.1
+  path_provider: ^2.1.5
+  logger: ^2.5.0
 
 dev_dependencies:
   flutter_test:
@@ -59,9 +60,9 @@ dev_dependencies:
 flutter:
   uses-material-design: true
 
-  # assets:
-  #   - assets/images/
-  #   - .env
+  assets:
+    - assets/.env
+    - assets/images/
 
   # fonts:
   #   - family: NotoSansJP

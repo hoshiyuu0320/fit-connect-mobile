@@ -45,5 +45,22 @@
 	<true/>
 	<key>UIApplicationSupportsIndirectInputEvents</key>
 	<true/>
+	<key>CFBundleURLTypes</key>
+	<array>
+	<dict>
+		<key>CFBundleTypeRole</key>
+		<string>Editor</string>
+		<key>CFBundleURLSchemes</key>
+		<array>
+		<string>fitconnectmobile</string>
+		</array>
+	</dict>
+	</array>
+
+	<!-- Universal Links用（オプション）将来実装 -->
+	<!-- <key>com.apple.developer.associated-domains</key>
+	<array>
+	<string>applinks:your-domain.com</string>
+	</array> -->
 </dict>
 </plist>
