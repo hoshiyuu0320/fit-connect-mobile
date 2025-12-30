@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
-import 'core/theme/app_theme.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:fit_connect_mobile/core/theme/app_theme.dart';
+import 'package:fit_connect_mobile/features/home/presentation/screens/main_screen.dart';
+import 'package:fit_connect_mobile/features/auth/presentation/screens/login_screen.dart';
 
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
@@ -10,10 +13,21 @@ class MyApp extends StatelessWidget {
       title: 'FIT-CONNECT',
       theme: AppTheme.lightTheme,
       debugShowCheckedModeBanner: false,
-      home: const Scaffold(
-        body: Center(
-          child: Text('FIT-CONNECT Mobile'),
-        ),
+      home: StreamBuilder<AuthState>(
+        stream: Supabase.instance.client.auth.onAuthStateChange,
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return const Scaffold(
+              body: Center(child: CircularProgressIndicator()),
+            );
+          }
+          final session = snapshot.data?.session;
+          if (session != null) {
+            return const MainScreen();
+          } else {
+            return const LoginScreen();
+          }
+        },
       ),
     );
   }
