@@ -1,8 +1,9 @@
 # FIT-CONNECT Mobile - 実装タスク一覧
 
 **作成日**: 2025年12月30日
-**バージョン**: 1.0
-**進捗状況**: 全体 35% 完了
+**バージョン**: 1.2
+**進捗状況**: 全体 55% 完了
+**最終更新**: 2025年12月30日 - フェーズ1完了
 
 ---
 
@@ -28,10 +29,11 @@
 | カテゴリ | 進捗 | 状態 |
 |---------|------|------|
 | **UI/画面レイアウト** | 50% | 🟡 進行中 |
-| **データモデル** | 0% | 🔴 未着手 |
-| **Riverpod Provider** | 0% | 🔴 未着手 |
-| **Supabase統合** | 10% | 🔴 認証のみ |
-| **リアルタイム機能** | 0% | 🔴 未着手 |
+| **データモデル** | 100% | 🟢 完了 |
+| **Repositoryレイヤー** | 100% | 🟢 完了 |
+| **Riverpod Provider** | 100% | 🟢 完了 |
+| **Supabase統合** | 50% | 🟡 進行中 |
+| **リアルタイム機能** | 20% | 🟡 進行中 |
 | **Edge Functions** | 0% | 🔴 未着手 |
 | **テスト** | 0% | 🔴 未着手 |
 
@@ -45,6 +47,11 @@
 - ✅ ボトムナビゲーション
 - ✅ ログイン画面UI
 - ✅ 認証ルーティング
+- ✅ データベースマイグレーション（RLSポリシー追加）
+- ✅ データモデル作成（8ファイル）
+- ✅ Repositoryレイヤー実装（5ファイル）
+- ✅ Riverpodプロバイダー作成（7ファイル）
+- ✅ **フェーズ1: データ基盤構築 完了**
 
 ---
 
@@ -56,47 +63,46 @@
 
 #### タスク
 
-- [ ] **1.1 データベースマイグレーション実行**
-  - [ ] `clients` テーブルへのカラム追加（initial_weight, goal_deadline, goal_set_at, goal_achieved_at）
-  - [ ] `messages` テーブルのカラム名変更と追加（content, created_at, image_urls, tags, reply_to_message_id, edited_at）
-  - [ ] `meal_records` テーブルの更新（notes, source, message_id, created_at, updated_at）
-  - [ ] `weight_records` テーブルの更新（notes, source, message_id, created_at, updated_at）
-  - [ ] `exercise_records` テーブルの更新（source, message_id, images, created_at, updated_at）
-  - [ ] インデックス作成（パフォーマンス最適化）
-  - [ ] RLSポリシーの見直しと追加
-  - ファイル: `supabase/migrations/YYYYMMDDHHMMSS_update_tables_for_client_app.sql`
+- [x] **1.1 データベースマイグレーション実行** ✅
+  - [x] `clients` テーブルへのカラム追加（initial_weight, goal_deadline, goal_set_at, goal_achieved_at）
+  - [x] `messages` テーブルのカラム名変更と追加（content, created_at, image_urls, tags, reply_to_message_id, edited_at）
+  - [x] `meal_records` テーブルの更新（notes, source, message_id, created_at, updated_at）
+  - [x] `weight_records` テーブルの更新（notes, source, message_id, created_at, updated_at）
+  - [x] `exercise_records` テーブルの更新（source, message_id, images, created_at, updated_at）
+  - [x] インデックス作成（パフォーマンス最適化）
+  - [x] RLSポリシーの見直しと追加
+  - ファイル: `supabase/migrations/20251230172037_add_client_policies.sql`
 
-- [ ] **1.2 データモデル作成（JSON Serializable）**
-  - [ ] `lib/features/auth/models/user_model.dart` - ユーザー/プロフィールモデル
-  - [ ] `lib/features/auth/models/client_model.dart` - クライアント情報モデル
-  - [ ] `lib/features/weight_records/models/weight_record_model.dart`
-  - [ ] `lib/features/meal_records/models/meal_record_model.dart`
-  - [ ] `lib/features/exercise_records/models/exercise_record_model.dart`
-  - [ ] `lib/features/messages/models/message_model.dart`
-  - [ ] `lib/features/messages/models/tag_model.dart`
-  - [ ] `lib/features/goals/models/goal_model.dart`
-  - [ ] `lib/shared/models/period_filter.dart` - 期間フィルタ用Enum
-  - [ ] `dart run build_runner build --delete-conflicting-outputs` 実行
+- [x] **1.2 データモデル作成（JSON Serializable）** ✅
+  - [x] `lib/features/auth/models/user_model.dart` - ユーザー/プロフィールモデル
+  - [x] `lib/features/auth/models/client_model.dart` - クライアント情報モデル
+  - [x] `lib/features/weight_records/models/weight_record_model.dart`
+  - [x] `lib/features/meal_records/models/meal_record_model.dart`
+  - [x] `lib/features/exercise_records/models/exercise_record_model.dart`
+  - [x] `lib/features/messages/models/message_model.dart`
+  - [x] `lib/features/messages/models/tag_model.dart`
+  - [x] `lib/shared/models/period_filter.dart` - 期間フィルタ用Enum
+  - [x] `dart run build_runner build --delete-conflicting-outputs` 実行
 
-- [ ] **1.3 Repositoryレイヤー実装**
-  - [ ] `lib/features/weight_records/data/weight_repository.dart`
-  - [ ] `lib/features/meal_records/data/meal_repository.dart`
-  - [ ] `lib/features/exercise_records/data/exercise_repository.dart`
-  - [ ] `lib/features/messages/data/message_repository.dart`
-  - [ ] `lib/features/goals/data/goal_repository.dart`
-  - [ ] Supabaseクエリロジックの実装
+- [x] **1.3 Repositoryレイヤー実装** ✅
+  - [x] `lib/features/weight_records/data/weight_repository.dart`
+  - [x] `lib/features/meal_records/data/meal_repository.dart`
+  - [x] `lib/features/exercise_records/data/exercise_repository.dart`
+  - [x] `lib/features/messages/data/message_repository.dart`
+  - [x] `lib/features/goals/data/goal_repository.dart`
+  - [x] Supabaseクエリロジックの実装
 
-- [ ] **1.4 Riverpodプロバイダー作成**
-  - [ ] `lib/features/auth/providers/auth_provider.dart` - 認証状態管理
-  - [ ] `lib/features/auth/providers/current_user_provider.dart` - 現在のユーザー情報
-  - [ ] `lib/features/weight_records/providers/weight_records_provider.dart`
-  - [ ] `lib/features/meal_records/providers/meal_records_provider.dart`
-  - [ ] `lib/features/exercise_records/providers/exercise_records_provider.dart`
-  - [ ] `lib/features/messages/providers/messages_provider.dart`
-  - [ ] `lib/features/goals/providers/goal_provider.dart`
-  - [ ] `dart run build_runner build --delete-conflicting-outputs` 実行
+- [x] **1.4 Riverpodプロバイダー作成** ✅
+  - [x] `lib/features/auth/providers/auth_provider.dart` - 認証状態管理
+  - [x] `lib/features/auth/providers/current_user_provider.dart` - 現在のユーザー情報
+  - [x] `lib/features/weight_records/providers/weight_records_provider.dart`
+  - [x] `lib/features/meal_records/providers/meal_records_provider.dart`
+  - [x] `lib/features/exercise_records/providers/exercise_records_provider.dart`
+  - [x] `lib/features/messages/providers/messages_provider.dart`
+  - [x] `lib/features/goals/providers/goal_provider.dart`
+  - [x] `dart run build_runner build --delete-conflicting-outputs` 実行
 
-**期待される成果**: 全画面が実際のSupabaseデータを表示できる状態
+**期待される成果**: 全画面が実際のSupabaseデータを表示できる状態 ✅ **フェーズ1完了！**
 
 ---
 
