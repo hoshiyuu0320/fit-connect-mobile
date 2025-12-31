@@ -79,6 +79,78 @@ INSERT INTO public.profiles (id, name, email) VALUES
   ('11111111-1111-1111-1111-111111111111', '山田太郎', 'yamada@fitconnect.jp');
 
 -- =============================================
+-- 1.5 クライアント用の認証ユーザー作成
+-- =============================================
+-- auth.users にクライアントユーザーを作成
+-- パスワード: password123
+INSERT INTO auth.users (
+  id,
+  instance_id,
+  aud,
+  role,
+  email,
+  encrypted_password,
+  email_confirmed_at,
+  confirmation_sent_at,
+  created_at,
+  updated_at,
+  raw_app_meta_data,
+  raw_user_meta_data,
+  is_super_admin,
+  confirmation_token,
+  email_change,
+  email_change_token_new,
+  recovery_token
+) VALUES (
+  '22222222-2222-2222-2222-222222222222',
+  '00000000-0000-0000-0000-000000000000',
+  'authenticated',
+  'authenticated',
+  'sato@test.com',
+  -- パスワード password123 のbcryptハッシュ
+  '$2b$10$fCroF9xXzza.6/SE1XV9auuIjOUqY4bmEPl4PuogUY6oPnk/T2l7q',
+  NOW(),
+  NOW(),
+  NOW(),
+  NOW(),
+  '{"provider":"email","providers":["email"]}',
+  '{"name":"佐藤花子"}',
+  FALSE,
+  '',
+  '',
+  '',
+  ''
+);
+
+-- auth.identities にもエントリを追加
+INSERT INTO auth.identities (
+  id,
+  provider_id,
+  user_id,
+  identity_data,
+  provider,
+  last_sign_in_at,
+  created_at,
+  updated_at
+) VALUES (
+  '22222222-2222-2222-2222-222222222222',
+  '22222222-2222-2222-2222-222222222222',
+  '22222222-2222-2222-2222-222222222222',
+  jsonb_build_object(
+    'sub', '22222222-2222-2222-2222-222222222222',
+    'email', 'sato@test.com'
+  ),
+  'email',
+  NOW(),
+  NOW(),
+  NOW()
+);
+
+-- クライアントのプロフィール
+INSERT INTO public.profiles (id, name, email) VALUES
+  ('22222222-2222-2222-2222-222222222222', '佐藤花子', 'sato@test.com');
+
+-- =============================================
 -- 2. クライアントの登録（トレーナーに紐づけ）
 -- =============================================
 INSERT INTO public.clients (
@@ -422,13 +494,17 @@ INSERT INTO public.tickets (
 -- 完了メッセージ
 -- =============================================
 -- Seed data insertion completed successfully!
--- 
+--
 -- 作成されたデータ:
--- - トレーナー: 1名（山田太郎）
--- - クライアント: 1名（佐藤花子）
+-- - トレーナー: 1名（山田太郎） - yamada@fitconnect.jp / password123
+-- - クライアント: 1名（佐藤花子） - sato@test.com / password123
 -- - 食事記録: 10件（3日間分）
 -- - 体重記録: 4件（初回 + 3日間分）
 -- - 運動記録: 6件（3日間分：有酸素3回、筋トレ3回）
 -- - メッセージ: 6件（3ラリー）
 -- - セッション: 5件（今日〜1週間後）
 -- - チケット: 1件
+--
+-- ログイン情報:
+-- [トレーナー] yamada@fitconnect.jp / password123
+-- [クライアント] sato@test.com / password123

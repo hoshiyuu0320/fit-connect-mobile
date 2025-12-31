@@ -155,14 +155,14 @@ await SupabaseService.initialize();
 
 **Key Tables:**
 
-| Table | Purpose | Key Features |
-|-------|---------|--------------|
-| `profiles` | User profiles | Auth integration, email |
-| `clients` | Client records | Goal tracking, biometrics, trainer relationship |
-| `messages` | Trainer-client chat | Tags, replies, 5-min edit window, image attachments |
-| `weight_records` | Weight logs | Message integration, auto goal tracking |
-| `meal_records` | Meal logs | Nutrition tracking, message-sourced records |
-| `exercise_records` | Exercise logs | 9 exercise types, image attachments |
+| Table              | Purpose             | Key Features                                        |
+| ------------------ | ------------------- | --------------------------------------------------- |
+| `profiles`         | User profiles       | Auth integration, email                             |
+| `clients`          | Client records      | Goal tracking, biometrics, trainer relationship     |
+| `messages`         | Trainer-client chat | Tags, replies, 5-min edit window, image attachments |
+| `weight_records`   | Weight logs         | Message integration, auto goal tracking             |
+| `meal_records`     | Meal logs           | Nutrition tracking, message-sourced records         |
+| `exercise_records` | Exercise logs       | 9 exercise types, image attachments                 |
 
 **Database Functions:**
 - `check_goal_achievement(client_id, weight)` - Returns true if client reached target
@@ -320,3 +320,6 @@ NotificationService.onMessageReceived((message) {
 
 **Current State:**
 The codebase is in the scaffolding phase. Directory structure is complete but most feature files await implementation. Focus on implementing one feature at a time following the established patterns.
+
+**Development rools:**
+.envは覗かないこと

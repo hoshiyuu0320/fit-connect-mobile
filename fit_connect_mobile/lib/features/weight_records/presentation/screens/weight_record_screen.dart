@@ -1,75 +1,467 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:fl_chart/fl_chart.dart';
 import 'package:fit_connect_mobile/core/theme/app_colors.dart';
+import 'package:fit_connect_mobile/features/weight_records/models/weight_record_model.dart';
+import 'package:fit_connect_mobile/features/weight_records/providers/weight_records_provider.dart';
+import 'package:fit_connect_mobile/features/goals/providers/goal_provider.dart';
+import 'package:fit_connect_mobile/features/auth/models/client_model.dart';
+import 'package:fit_connect_mobile/shared/models/period_filter.dart';
 import 'package:lucide_icons/lucide_icons.dart';
+import 'package:intl/intl.dart';
 
-class WeightRecordScreen extends StatelessWidget {
+class WeightRecordScreen extends ConsumerStatefulWidget {
   const WeightRecordScreen({super.key});
 
   @override
+  ConsumerState<WeightRecordScreen> createState() => _WeightRecordScreenState();
+}
+
+class _WeightRecordScreenState extends ConsumerState<WeightRecordScreen> {
+  PeriodFilter _selectedPeriod = PeriodFilter.month;
+
+  @override
   Widget build(BuildContext context) {
+    final recordsAsync = ref.watch(
+      weightRecordsProvider(period: _selectedPeriod),
+    );
+    final latestWeightAsync = ref.watch(latestWeightRecordProvider);
+    final goalAsync = ref.watch(currentGoalProvider);
+    final achievementRateAsync = ref.watch(achievementRateProvider);
+
     return ListView(
       padding: const EdgeInsets.all(16),
       children: [
-        // Stats
-        Container(
-          padding: const EdgeInsets.all(20),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(24),
-            border: Border.all(color: AppColors.slate100),
-          ),
-          child: Column(
-            children: [
-             Row(
-               mainAxisAlignment: MainAxisAlignment.spaceBetween,
-               children: [
-                 _buildTopStat('Current', '65.2', 'kg'),
-                 Container(width: 1, height: 40, color: AppColors.slate100),
-                 _buildTopStat('Goal', '60.0', 'kg', isAccent: true),
-                 Container(width: 1, height: 40, color: AppColors.slate100),
-                 _buildTopStat('Left', '-5.2', 'kg'),
-               ],
-             ),
-             const SizedBox(height: 20),
-             Row(
-               children: [
-                 Expanded(child: _buildComparisonBox('vs Last', '0.6kg')),
-                 const SizedBox(width: 12),
-                 Expanded(child: _buildComparisonBox('vs Start', '2.3kg')),
-               ],
-             ),
-            ],
-          ),
-        ),
-        
+        // Period Filter
+        _buildPeriodFilter(),
+        const SizedBox(height: 16),
+
+        // Stats Card
+        _buildStatsCard(latestWeightAsync, goalAsync, achievementRateAsync),
         const SizedBox(height: 24),
-        
-        // Chart Placeholder (Fl_chart would go here)
-        Container(
-          height: 240,
-          decoration: BoxDecoration(
-             color: Colors.white,
-             borderRadius: BorderRadius.circular(24),
-             border: Border.all(color: AppColors.slate100),
-          ),
-          child: Center(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(LucideIcons.barChart, size: 48, color: AppColors.primary100),
-                const SizedBox(height: 8),
-                Text(
-                  'Weight Chart Area',
-                  style: TextStyle(
-                    color: AppColors.primary200,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ],
+
+        // Chart
+        _buildChartCard(recordsAsync, goalAsync),
+        const SizedBox(height: 24),
+
+        // Records List
+        _buildRecordsList(recordsAsync),
+      ],
+    );
+  }
+
+  Widget _buildPeriodFilter() {
+    return SingleChildScrollView(
+      scrollDirection: Axis.horizontal,
+      child: Row(
+        children: PeriodFilter.values.map((period) {
+          final isSelected = period == _selectedPeriod;
+          return Padding(
+            padding: const EdgeInsets.only(right: 8),
+            child: FilterChip(
+              label: Text(period.label),
+              selected: isSelected,
+              onSelected: (_) => setState(() => _selectedPeriod = period),
+              selectedColor: AppColors.primary100,
+              checkmarkColor: AppColors.primary600,
+              labelStyle: TextStyle(
+                color: isSelected ? AppColors.primary600 : AppColors.slate600,
+                fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+              ),
             ),
+          );
+        }).toList(),
+      ),
+    );
+  }
+
+  Widget _buildStatsCard(
+    AsyncValue<WeightRecord?> latestWeightAsync,
+    AsyncValue<Client?> goalAsync,
+    AsyncValue<double> achievementRateAsync,
+  ) {
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(color: AppColors.slate100),
+      ),
+      child: latestWeightAsync.when(
+        data: (latestWeight) {
+          return goalAsync.when(
+            data: (goal) {
+              final currentWeight = latestWeight?.weight ?? 0.0;
+              final targetWeight = goal?.targetWeight ?? 0.0;
+              final initialWeight = goal?.initialWeight ?? currentWeight;
+              final remaining = currentWeight - targetWeight;
+              final vsStart = initialWeight - currentWeight;
+
+              return Column(
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      _buildTopStat(
+                        'Current',
+                        currentWeight.toStringAsFixed(1),
+                        'kg',
+                      ),
+                      Container(width: 1, height: 40, color: AppColors.slate100),
+                      _buildTopStat(
+                        'Goal',
+                        targetWeight.toStringAsFixed(1),
+                        'kg',
+                        isAccent: true,
+                      ),
+                      Container(width: 1, height: 40, color: AppColors.slate100),
+                      _buildTopStat(
+                        'Left',
+                        '${remaining >= 0 ? "-" : "+"}${remaining.abs().toStringAsFixed(1)}',
+                        'kg',
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 20),
+                  // Achievement Rate Progress
+                  achievementRateAsync.when(
+                    data: (rate) => _buildProgressBar(rate),
+                    loading: () => const LinearProgressIndicator(),
+                    error: (_, __) => const SizedBox.shrink(),
+                  ),
+                  const SizedBox(height: 16),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: _buildComparisonBox(
+                          'vs Start',
+                          '${vsStart >= 0 ? "-" : "+"}${vsStart.abs().toStringAsFixed(1)}kg',
+                          isPositive: vsStart >= 0,
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              );
+            },
+            loading: () => const Center(child: CircularProgressIndicator()),
+            error: (e, _) => Center(child: Text('Error: $e')),
+          );
+        },
+        loading: () => const Center(child: CircularProgressIndicator()),
+        error: (e, _) => Center(child: Text('Error: $e')),
+      ),
+    );
+  }
+
+  Widget _buildProgressBar(double rate) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            const Text(
+              'Achievement',
+              style: TextStyle(
+                color: AppColors.slate500,
+                fontSize: 12,
+              ),
+            ),
+            Text(
+              '${rate.toStringAsFixed(1)}%',
+              style: const TextStyle(
+                color: AppColors.primary600,
+                fontSize: 14,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 8),
+        ClipRRect(
+          borderRadius: BorderRadius.circular(4),
+          child: LinearProgressIndicator(
+            value: rate / 100,
+            backgroundColor: AppColors.slate100,
+            valueColor: AlwaysStoppedAnimation<Color>(
+              rate >= 100 ? AppColors.success : AppColors.primary600,
+            ),
+            minHeight: 8,
           ),
         ),
       ],
+    );
+  }
+
+  Widget _buildChartCard(AsyncValue<List<WeightRecord>> recordsAsync, AsyncValue<Client?> goalAsync) {
+    return Container(
+      height: 280,
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(color: AppColors.slate100),
+      ),
+      child: recordsAsync.when(
+        data: (records) {
+          if (records.isEmpty) {
+            return Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(LucideIcons.scale, size: 48, color: AppColors.slate300),
+                  const SizedBox(height: 12),
+                  const Text(
+                    'No weight records yet',
+                    style: TextStyle(color: AppColors.slate400),
+                  ),
+                  const SizedBox(height: 8),
+                  const Text(
+                    'Start tracking your weight!',
+                    style: TextStyle(color: AppColors.slate300, fontSize: 12),
+                  ),
+                ],
+              ),
+            );
+          }
+
+          // Reverse to show oldest first in chart
+          final chartRecords = records.reversed.toList();
+          final targetWeight = goalAsync.valueOrNull?.targetWeight;
+
+          // Calculate min/max for Y axis
+          final weights = chartRecords.map<double>((r) => r.weight).toList();
+          if (targetWeight != null) weights.add(targetWeight);
+          final minWeight = weights.reduce((a, b) => a < b ? a : b) - 2;
+          final maxWeight = weights.reduce((a, b) => a > b ? a : b) + 2;
+
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                'Weight Trend',
+                style: TextStyle(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 16,
+                  color: AppColors.slate800,
+                ),
+              ),
+              const SizedBox(height: 16),
+              Expanded(
+                child: LineChart(
+                  LineChartData(
+                    gridData: FlGridData(
+                      show: true,
+                      drawVerticalLine: false,
+                      horizontalInterval: 2,
+                      getDrawingHorizontalLine: (value) => FlLine(
+                        color: AppColors.slate100,
+                        strokeWidth: 1,
+                      ),
+                    ),
+                    titlesData: FlTitlesData(
+                      leftTitles: AxisTitles(
+                        sideTitles: SideTitles(
+                          showTitles: true,
+                          reservedSize: 40,
+                          getTitlesWidget: (value, meta) {
+                            return Text(
+                              value.toStringAsFixed(0),
+                              style: const TextStyle(
+                                color: AppColors.slate400,
+                                fontSize: 10,
+                              ),
+                            );
+                          },
+                        ),
+                      ),
+                      bottomTitles: AxisTitles(
+                        sideTitles: SideTitles(
+                          showTitles: true,
+                          reservedSize: 30,
+                          interval: (chartRecords.length / 5).ceilToDouble(),
+                          getTitlesWidget: (value, meta) {
+                            final index = value.toInt();
+                            if (index < 0 || index >= chartRecords.length) {
+                              return const SizedBox.shrink();
+                            }
+                            final date = chartRecords[index].recordedAt;
+                            return Padding(
+                              padding: const EdgeInsets.only(top: 8),
+                              child: Text(
+                                DateFormat('M/d').format(date),
+                                style: const TextStyle(
+                                  color: AppColors.slate400,
+                                  fontSize: 10,
+                                ),
+                              ),
+                            );
+                          },
+                        ),
+                      ),
+                      rightTitles: const AxisTitles(
+                        sideTitles: SideTitles(showTitles: false),
+                      ),
+                      topTitles: const AxisTitles(
+                        sideTitles: SideTitles(showTitles: false),
+                      ),
+                    ),
+                    borderData: FlBorderData(show: false),
+                    minY: minWeight,
+                    maxY: maxWeight,
+                    lineBarsData: [
+                      // Weight line
+                      LineChartBarData(
+                        spots: chartRecords.asMap().entries.map<FlSpot>((entry) {
+                          return FlSpot(
+                            entry.key.toDouble(),
+                            entry.value.weight,
+                          );
+                        }).toList(),
+                        isCurved: true,
+                        color: AppColors.primary600,
+                        barWidth: 3,
+                        dotData: FlDotData(
+                          show: true,
+                          getDotPainter: (spot, percent, barData, index) {
+                            return FlDotCirclePainter(
+                              radius: 4,
+                              color: Colors.white,
+                              strokeWidth: 2,
+                              strokeColor: AppColors.primary600,
+                            );
+                          },
+                        ),
+                        belowBarData: BarAreaData(
+                          show: true,
+                          color: AppColors.primary100.withAlpha(100),
+                        ),
+                      ),
+                      // Target line (if exists)
+                      if (targetWeight != null)
+                        LineChartBarData(
+                          spots: [
+                            FlSpot(0, targetWeight),
+                            FlSpot(
+                              (chartRecords.length - 1).toDouble(),
+                              targetWeight,
+                            ),
+                          ],
+                          isCurved: false,
+                          color: AppColors.success,
+                          barWidth: 2,
+                          dashArray: [5, 5],
+                          dotData: const FlDotData(show: false),
+                        ),
+                    ],
+                    lineTouchData: LineTouchData(
+                      touchTooltipData: LineTouchTooltipData(
+                        getTooltipItems: (touchedSpots) {
+                          return touchedSpots.map<LineTooltipItem?>((spot) {
+                            if (spot.barIndex == 1) return null; // Skip target line
+                            final record = chartRecords[spot.x.toInt()];
+                            return LineTooltipItem(
+                              '${record.weight.toStringAsFixed(1)} kg\n${DateFormat('M/d').format(record.recordedAt)}',
+                              const TextStyle(
+                                color: Colors.white,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            );
+                          }).toList();
+                        },
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          );
+        },
+        loading: () => const Center(child: CircularProgressIndicator()),
+        error: (e, _) => Center(child: Text('Error: $e')),
+      ),
+    );
+  }
+
+  Widget _buildRecordsList(AsyncValue<List<WeightRecord>> recordsAsync) {
+    return recordsAsync.when(
+      data: (records) {
+        if (records.isEmpty) return const SizedBox.shrink();
+
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+              'Recent Records',
+              style: TextStyle(
+                fontWeight: FontWeight.bold,
+                fontSize: 16,
+                color: AppColors.slate800,
+              ),
+            ),
+            const SizedBox(height: 12),
+            ...records.take(10).map((record) => Container(
+              margin: const EdgeInsets.only(bottom: 8),
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: AppColors.slate100),
+              ),
+              child: Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(10),
+                    decoration: BoxDecoration(
+                      color: AppColors.primary50,
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: const Icon(
+                      LucideIcons.scale,
+                      size: 20,
+                      color: AppColors.primary600,
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          '${record.weight.toStringAsFixed(1)} kg',
+                          style: const TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 16,
+                            color: AppColors.slate800,
+                          ),
+                        ),
+                        if (record.notes != null && record.notes!.isNotEmpty)
+                          Text(
+                            record.notes!,
+                            style: const TextStyle(
+                              color: AppColors.slate500,
+                              fontSize: 12,
+                            ),
+                          ),
+                      ],
+                    ),
+                  ),
+                  Text(
+                    DateFormat('M/d HH:mm').format(record.recordedAt),
+                    style: const TextStyle(
+                      color: AppColors.slate400,
+                      fontSize: 12,
+                    ),
+                  ),
+                ],
+              ),
+            )),
+          ],
+        );
+      },
+      loading: () => const Center(child: CircularProgressIndicator()),
+      error: (e, _) => Center(child: Text('Error: $e')),
     );
   }
 
@@ -110,11 +502,15 @@ class WeightRecordScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildComparisonBox(String label, String value) {
+  Widget _buildComparisonBox(String label, String value, {bool isPositive = true}) {
+    final color = isPositive ? AppColors.emerald600 : AppColors.rose800;
+    final bgColor = isPositive ? AppColors.emerald50 : AppColors.rose100;
+    final icon = isPositive ? LucideIcons.arrowDown : LucideIcons.arrowUp;
+
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: AppColors.emerald50,
+        color: bgColor,
         borderRadius: BorderRadius.circular(12),
       ),
       child: Column(
@@ -122,21 +518,21 @@ class WeightRecordScreen extends StatelessWidget {
           Text(
             label,
             style: TextStyle(
-               color: AppColors.emerald600.withOpacity(0.7),
-               fontSize: 10,
-               fontWeight: FontWeight.w500,
+              color: color.withAlpha(180),
+              fontSize: 10,
+              fontWeight: FontWeight.w500,
             ),
           ),
           const SizedBox(height: 4),
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              const Icon(LucideIcons.arrowDown, color: AppColors.emerald600, size: 14),
+              Icon(icon, color: color, size: 14),
               const SizedBox(width: 4),
               Text(
                 value,
-                style: const TextStyle(
-                  color: AppColors.emerald600,
+                style: TextStyle(
+                  color: color,
                   fontSize: 14,
                   fontWeight: FontWeight.bold,
                 ),

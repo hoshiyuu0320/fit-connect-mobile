@@ -52,7 +52,7 @@ class AuthNotifier extends _$AuthNotifier {
   Future<void> signInWithEmail(String email) async {
     await SupabaseService.client.auth.signInWithOtp(
       email: email,
-      emailRedirectTo: 'fitconnect://auth/callback',
+      emailRedirectTo: 'fitconnectmobile://login-callback',
     );
   }
 
