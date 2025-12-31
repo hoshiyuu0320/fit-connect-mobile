@@ -6,6 +6,8 @@ import 'package:fit_connect_mobile/core/theme/app_theme.dart';
 import 'package:fit_connect_mobile/features/meal_records/models/meal_record_model.dart';
 import 'package:fit_connect_mobile/features/meal_records/providers/meal_records_provider.dart';
 import 'package:fit_connect_mobile/features/meal_records/presentation/widgets/meal_card.dart';
+import 'package:fit_connect_mobile/features/meal_records/presentation/widgets/meal_week_calendar.dart';
+import 'package:fit_connect_mobile/features/meal_records/presentation/widgets/meal_month_calendar.dart';
 import 'package:fit_connect_mobile/shared/models/period_filter.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import 'package:intl/intl.dart';
@@ -36,7 +38,17 @@ class _MealRecordScreenState extends ConsumerState<MealRecordScreen> {
 
         // Summary Card
         _buildSummaryCard(recordsAsync, todayCountAsync),
-        const SizedBox(height: 24),
+        const SizedBox(height: 16),
+
+        // Calendar - show week calendar for week, month calendar for month
+        if (_selectedPeriod == PeriodFilter.week) ...[
+          const MealWeekCalendar(),
+          const SizedBox(height: 16),
+        ],
+        if (_selectedPeriod == PeriodFilter.month) ...[
+          const MealMonthCalendar(),
+          const SizedBox(height: 16),
+        ],
 
         // Meal Records List
         _buildRecordsList(recordsAsync),
@@ -313,7 +325,11 @@ Widget previewMealRecordScreenStatic() {
 
             // Summary Card Preview
             _PreviewSummaryCard(),
-            const SizedBox(height: 24),
+            const SizedBox(height: 16),
+
+            // Week Calendar Preview
+            _PreviewWeekCalendar(),
+            const SizedBox(height: 16),
 
             // Records List Preview
             _PreviewRecordsList(),
@@ -340,7 +356,11 @@ Widget previewMealRecordScreenEmpty() {
 
             // Empty Summary Card
             _PreviewSummaryCardEmpty(),
-            const SizedBox(height: 24),
+            const SizedBox(height: 16),
+
+            // Week Calendar Preview (empty)
+            _PreviewWeekCalendarEmpty(),
+            const SizedBox(height: 16),
 
             // Empty State
             Center(
@@ -494,6 +514,200 @@ class _PreviewRecordsList extends StatelessWidget {
         const Divider(height: 24, color: AppColors.slate100),
         ..._mockMealRecords.map((record) => MealCard(record: record)),
       ],
+    );
+  }
+}
+
+class _PreviewWeekCalendar extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    final daysFromMonday = (today.weekday - 1) % 7;
+    final startOfWeek = today.subtract(Duration(days: daysFromMonday));
+    final endOfWeek = startOfWeek.add(const Duration(days: 6));
+
+    // Mock data
+    final mockMealCounts = <DateTime, int>{};
+    for (int i = 0; i < 7; i++) {
+      final date = startOfWeek.add(Duration(days: i));
+      if (!date.isAfter(today)) {
+        mockMealCounts[date] = (date.day + i) % 4;
+      }
+    }
+    mockMealCounts[today] = 2;
+
+    const dayLabels = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
+
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withAlpha(25),
+            blurRadius: 3,
+            offset: const Offset(0, 1),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            '${DateFormat('M月d日').format(startOfWeek)}〜${DateFormat('M月d日').format(endOfWeek)}',
+            style: const TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.w600,
+              color: AppColors.slate800,
+            ),
+          ),
+          const SizedBox(height: 16),
+          Row(
+            children: List.generate(7, (index) {
+              final date = startOfWeek.add(Duration(days: index));
+              final count = mockMealCounts[date] ?? 0;
+              final isToday = date == today;
+              final isFuture = date.isAfter(today);
+              final color = isFuture ? AppColors.grassLevel0 : _getGrassColor(count);
+              final textColor = count >= 2 && !isFuture ? Colors.white : AppColors.slate600;
+
+              return Expanded(
+                child: Column(
+                  children: [
+                    Text(
+                      dayLabels[index],
+                      style: const TextStyle(fontSize: 11, color: AppColors.slate400),
+                    ),
+                    const SizedBox(height: 6),
+                    Container(
+                      width: 44,
+                      height: 44,
+                      decoration: BoxDecoration(
+                        color: color,
+                        borderRadius: BorderRadius.circular(12),
+                        border: isToday
+                            ? Border.all(color: AppColors.primary600, width: 3)
+                            : null,
+                      ),
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Text(
+                            '${date.day}',
+                            style: TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w600,
+                              color: isFuture ? AppColors.slate400 : textColor,
+                            ),
+                          ),
+                          if (count > 0 && !isFuture)
+                            Text(
+                              '$count食',
+                              style: TextStyle(fontSize: 10, color: textColor),
+                            ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              );
+            }),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Color _getGrassColor(int count) {
+    switch (count) {
+      case 0: return AppColors.grassLevel0;
+      case 1: return AppColors.grassLevel1;
+      case 2: return AppColors.grassLevel2;
+      default: return AppColors.grassLevel3;
+    }
+  }
+}
+
+class _PreviewWeekCalendarEmpty extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    final daysFromMonday = (today.weekday - 1) % 7;
+    final startOfWeek = today.subtract(Duration(days: daysFromMonday));
+    final endOfWeek = startOfWeek.add(const Duration(days: 6));
+
+    const dayLabels = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
+
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withAlpha(25),
+            blurRadius: 3,
+            offset: const Offset(0, 1),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            '${DateFormat('M月d日').format(startOfWeek)}〜${DateFormat('M月d日').format(endOfWeek)}',
+            style: const TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.w600,
+              color: AppColors.slate800,
+            ),
+          ),
+          const SizedBox(height: 16),
+          Row(
+            children: List.generate(7, (index) {
+              final date = startOfWeek.add(Duration(days: index));
+              final isToday = date == today;
+              final isFuture = date.isAfter(today);
+
+              return Expanded(
+                child: Column(
+                  children: [
+                    Text(
+                      dayLabels[index],
+                      style: const TextStyle(fontSize: 11, color: AppColors.slate400),
+                    ),
+                    const SizedBox(height: 6),
+                    Container(
+                      width: 44,
+                      height: 44,
+                      decoration: BoxDecoration(
+                        color: AppColors.grassLevel0,
+                        borderRadius: BorderRadius.circular(12),
+                        border: isToday
+                            ? Border.all(color: AppColors.primary600, width: 3)
+                            : null,
+                      ),
+                      child: Center(
+                        child: Text(
+                          '${date.day}',
+                          style: TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w600,
+                            color: isFuture ? AppColors.slate400 : AppColors.slate600,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              );
+            }),
+          ),
+        ],
+      ),
     );
   }
 }
