@@ -14,11 +14,21 @@ class MainScreen extends StatefulWidget {
 
 class _MainScreenState extends State<MainScreen> {
   int _currentIndex = 0;
+  int _recordsTabIndex = 0;
 
-  final _screens = [
-    const HomeScreen(),
-    const MessageScreen(), 
-    const RecordsScreen(),
+  void _navigateToRecordsTab(int tabIndex) {
+    setState(() {
+      _currentIndex = 2;
+      _recordsTabIndex = tabIndex;
+    });
+  }
+
+  List<Widget> get _screens => [
+    HomeScreen(
+      onNavigateToRecordsTab: _navigateToRecordsTab,
+    ),
+    const MessageScreen(),
+    RecordsScreen(initialTabIndex: _recordsTabIndex),
   ];
 
   @override

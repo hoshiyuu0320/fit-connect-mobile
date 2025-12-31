@@ -6,14 +6,16 @@ class GoalCard extends StatelessWidget {
   final double currentWeight;
   final double targetWeight;
   final double initialWeight;
-  final DateTime targetDate;
+  final DateTime? targetDate;
+  final bool isLoading;
 
   const GoalCard({
     super.key,
     required this.currentWeight,
     required this.targetWeight,
     required this.initialWeight,
-    required this.targetDate,
+    this.targetDate,
+    this.isLoading = false,
   });
 
   @override
@@ -30,7 +32,7 @@ class GoalCard extends StatelessWidget {
     final progress = progressRaw.clamp(0.0, 1.0);
     final percentage = (progress * 100).toInt();
 
-    final daysLeft = targetDate.difference(DateTime.now()).inDays;
+    final daysLeft = targetDate?.difference(DateTime.now()).inDays;
 
     return Container(
       decoration: BoxDecoration(
@@ -174,48 +176,50 @@ class GoalCard extends StatelessWidget {
                 const SizedBox(height: 16),
                 
                 // Deadline Info
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                  decoration: BoxDecoration(
-                    color: Colors.white.withOpacity(0.1),
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: Colors.white.withOpacity(0.05)),
-                  ),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Row(
-                        children: [
-                          const Icon(LucideIcons.calendar, color: AppColors.primary50, size: 14),
-                          const SizedBox(width: 8),
-                          Text(
-                            'Target: ${_formatDate(targetDate)}',
-                            style: const TextStyle(
-                              color: AppColors.primary50,
-                              fontSize: 12,
-                              fontWeight: FontWeight.w500,
+                if (targetDate != null)
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                    decoration: BoxDecoration(
+                      color: Colors.white.withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: Colors.white.withOpacity(0.05)),
+                    ),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Row(
+                          children: [
+                            const Icon(LucideIcons.calendar, color: AppColors.primary50, size: 14),
+                            const SizedBox(width: 8),
+                            Text(
+                              'Target: ${_formatDate(targetDate!)}',
+                              style: const TextStyle(
+                                color: AppColors.primary50,
+                                fontSize: 12,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                          ],
+                        ),
+                        if (daysLeft != null)
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                            decoration: BoxDecoration(
+                              color: Colors.white.withOpacity(0.2),
+                              borderRadius: BorderRadius.circular(4),
+                            ),
+                            child: Text(
+                              '$daysLeft Days Left',
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 12,
+                                fontWeight: FontWeight.bold,
+                              ),
                             ),
                           ),
-                        ],
-                      ),
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                        decoration: BoxDecoration(
-                          color: Colors.white.withOpacity(0.2),
-                          borderRadius: BorderRadius.circular(4),
-                        ),
-                        child: Text(
-                          '$daysLeft Days Left',
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 12,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
-                ),
               ],
             ),
           ),

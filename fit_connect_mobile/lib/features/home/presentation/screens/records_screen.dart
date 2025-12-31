@@ -5,7 +5,9 @@ import 'package:fit_connect_mobile/features/weight_records/presentation/screens/
 import 'package:fit_connect_mobile/features/exercise_records/presentation/screens/exercise_record_screen.dart';
 
 class RecordsScreen extends StatefulWidget {
-  const RecordsScreen({super.key});
+  final int initialTabIndex;
+
+  const RecordsScreen({super.key, this.initialTabIndex = 0});
 
   @override
   State<RecordsScreen> createState() => _RecordsScreenState();
@@ -17,7 +19,19 @@ class _RecordsScreenState extends State<RecordsScreen> with SingleTickerProvider
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 3, vsync: this);
+    _tabController = TabController(
+      length: 3,
+      vsync: this,
+      initialIndex: widget.initialTabIndex,
+    );
+  }
+
+  @override
+  void didUpdateWidget(RecordsScreen oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.initialTabIndex != widget.initialTabIndex) {
+      _tabController.animateTo(widget.initialTabIndex);
+    }
   }
 
   @override
