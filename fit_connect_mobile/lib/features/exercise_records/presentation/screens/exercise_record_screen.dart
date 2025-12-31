@@ -5,6 +5,7 @@ import 'package:fit_connect_mobile/core/theme/app_colors.dart';
 import 'package:fit_connect_mobile/core/theme/app_theme.dart';
 import 'package:fit_connect_mobile/features/exercise_records/models/exercise_record_model.dart';
 import 'package:fit_connect_mobile/features/exercise_records/providers/exercise_records_provider.dart';
+import 'package:fit_connect_mobile/features/exercise_records/presentation/widgets/exercise_week_calendar.dart';
 import 'package:fit_connect_mobile/shared/models/period_filter.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import 'package:intl/intl.dart';
@@ -46,7 +47,13 @@ class _ExerciseRecordScreenState extends ConsumerState<ExerciseRecordScreen> {
 
         // Summary Card
         _buildSummaryCard(recordsAsync, typeCountsAsync),
-        const SizedBox(height: 24),
+        const SizedBox(height: 16),
+
+        // Calendar - show week calendar for week period
+        if (_selectedPeriod == PeriodFilter.week) ...[
+          const ExerciseWeekCalendar(),
+          const SizedBox(height: 16),
+        ],
 
         // Exercise Records List
         _buildRecordsList(recordsAsync),
@@ -478,7 +485,11 @@ Widget previewExerciseRecordScreenStatic() {
 
             // Summary Card Preview
             _PreviewSummaryCard(),
-            const SizedBox(height: 24),
+            const SizedBox(height: 16),
+
+            // Week Calendar Preview
+            _PreviewWeekCalendar(),
+            const SizedBox(height: 16),
 
             // Records List Preview
             _PreviewRecordsList(),
@@ -730,11 +741,15 @@ class _PreviewSummaryCardEmpty extends StatelessWidget {
           const SizedBox(height: 16),
           Row(
             children: [
-              Expanded(child: _PreviewSummaryCard()._buildStat('Total', '0', '📊')),
+              Expanded(
+                  child: _PreviewSummaryCard()._buildStat('Total', '0', '📊')),
               const SizedBox(width: 8),
-              Expanded(child: _PreviewSummaryCard()._buildStat('Strength', '0', '💪')),
+              Expanded(
+                  child:
+                      _PreviewSummaryCard()._buildStat('Strength', '0', '💪')),
               const SizedBox(width: 8),
-              Expanded(child: _PreviewSummaryCard()._buildStat('Cardio', '0', '🏃')),
+              Expanded(
+                  child: _PreviewSummaryCard()._buildStat('Cardio', '0', '🏃')),
             ],
           ),
         ],
@@ -846,6 +861,124 @@ class _PreviewRecordsList extends StatelessWidget {
                 ],
               ],
             ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _PreviewWeekCalendar extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    final daysFromMonday = (today.weekday - 1) % 7;
+    final startOfWeek = today.subtract(Duration(days: daysFromMonday));
+
+    // Mock data
+    final mockExerciseData = <DateTime, List<String>>{};
+    mockExerciseData[startOfWeek] = ['strength_training'];
+    mockExerciseData[startOfWeek.add(const Duration(days: 2))] = [
+      'strength_training'
+    ];
+    mockExerciseData[startOfWeek.add(const Duration(days: 3))] = ['cardio'];
+    mockExerciseData[startOfWeek.add(const Duration(days: 5))] = [
+      'strength_training'
+    ];
+
+    const dayLabels = ['月', '火', '水', '木', '金', '土', '日'];
+
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withAlpha(25),
+            blurRadius: 3,
+            offset: const Offset(0, 1),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            '${DateFormat('M月').format(startOfWeek)} ${DateFormat('yyyy').format(today)}（週間）',
+            style: const TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.w600,
+              color: AppColors.slate800,
+            ),
+          ),
+          const SizedBox(height: 16),
+          Row(
+            children: List.generate(7, (index) {
+              final date = startOfWeek.add(Duration(days: index));
+              final exerciseTypes = mockExerciseData[date] ?? [];
+              final isToday = date == today;
+              final isFuture = date.isAfter(today);
+              final hasRecord = exerciseTypes.isNotEmpty;
+              final backgroundColor =
+                  hasRecord ? AppColors.indigo50 : AppColors.slate50;
+
+              String? icon;
+              if (exerciseTypes.contains('strength_training')) {
+                icon = '💪';
+              } else if (exerciseTypes.any((type) =>
+                  type == 'cardio' ||
+                  type == 'running' ||
+                  type == 'walking' ||
+                  type == 'cycling')) {
+                icon = '🏃';
+              }
+
+              return Expanded(
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 1.5),
+                  child: Column(
+                  children: [
+                    Text(
+                      dayLabels[index],
+                      style: const TextStyle(
+                          fontSize: 11, color: AppColors.slate400),
+                    ),
+                    const SizedBox(height: 6),
+                    Container(
+                      width: 44,
+                      height: 52,
+                      decoration: BoxDecoration(
+                        color: isFuture ? AppColors.slate50 : backgroundColor,
+                        borderRadius: BorderRadius.circular(12),
+                        border: isToday
+                            ? Border.all(color: AppColors.primary600, width: 3)
+                            : null,
+                      ),
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          if (icon != null && !isFuture) ...[
+                            Text(icon, style: const TextStyle(fontSize: 20)),
+                          ],
+                          Text(
+                            '${date.day}',
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: isFuture
+                                  ? AppColors.slate400
+                                  : AppColors.slate600,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+                ),
+              );
+            }),
           ),
         ],
       ),
