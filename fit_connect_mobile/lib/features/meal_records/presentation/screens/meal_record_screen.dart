@@ -1,125 +1,288 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:fit_connect_mobile/core/theme/app_colors.dart';
+import 'package:fit_connect_mobile/features/meal_records/models/meal_record_model.dart';
+import 'package:fit_connect_mobile/features/meal_records/providers/meal_records_provider.dart';
 import 'package:fit_connect_mobile/features/meal_records/presentation/widgets/meal_card.dart';
-import 'package:fit_connect_mobile/features/meal_records/presentation/widgets/meal_summary_card.dart';
+import 'package:fit_connect_mobile/shared/models/period_filter.dart';
+import 'package:lucide_icons/lucide_icons.dart';
+import 'package:intl/intl.dart';
 
-class MealRecordScreen extends StatefulWidget {
+class MealRecordScreen extends ConsumerStatefulWidget {
   const MealRecordScreen({super.key});
 
   @override
-  State<MealRecordScreen> createState() => _MealRecordScreenState();
+  ConsumerState<MealRecordScreen> createState() => _MealRecordScreenState();
 }
 
-class _MealRecordScreenState extends State<MealRecordScreen> {
-  String _activePeriod = 'Today';
-
-  final List<Map<String, dynamic>> _mockLogs = [
-    {
-      'id': '1',
-      'type': 'Breakfast',
-      'title': 'Oatmeal & Fruits',
-      'time': '07:30',
-      'calories': 450,
-      'imageUrl': 'https://picsum.photos/seed/food1/200/200',
-    },
-    {
-      'id': '2',
-      'type': 'Lunch',
-      'title': 'Chicken Salad',
-      'time': '12:30',
-      'calories': 620,
-      'imageUrl': 'https://picsum.photos/seed/food2/200/200',
-    },
-    {
-      'id': '3',
-      'type': 'Snack',
-      'title': 'Protein Bar',
-      'time': '15:00',
-      'calories': 180,
-      // No image
-    },
-  ];
+class _MealRecordScreenState extends ConsumerState<MealRecordScreen> {
+  PeriodFilter _selectedPeriod = PeriodFilter.today;
 
   @override
   Widget build(BuildContext context) {
+    final recordsAsync = ref.watch(
+      mealRecordsProvider(period: _selectedPeriod),
+    );
+    final todayCountAsync = ref.watch(todayMealCountProvider);
+
     return ListView(
       padding: const EdgeInsets.all(16),
       children: [
-        // Tabs
-        Container(
-          padding: const EdgeInsets.all(4),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: AppColors.slate100),
-          ),
-          child: Row(
-            children: ['Today', 'Week', 'Month', 'All'].map((tab) {
-              final isActive = _activePeriod == tab;
-              return Expanded(
-                child: GestureDetector(
-                  onTap: () => setState(() => _activePeriod = tab),
-                  child: AnimatedContainer(
-                    duration: const Duration(milliseconds: 200),
-                    padding: const EdgeInsets.symmetric(vertical: 8),
-                    decoration: BoxDecoration(
-                      color: isActive ? AppColors.primary600 : Colors.transparent,
-                      borderRadius: BorderRadius.circular(12),
-                      boxShadow: isActive
-                          ? [
-                              BoxShadow(
-                                color: AppColors.primary600.withOpacity(0.3),
-                                blurRadius: 8,
-                                offset: const Offset(0, 4),
-                              ),
-                            ]
-                          : [],
-                    ),
-                    child: Center(
-                      child: Text(
-                        tab,
-                        style: TextStyle(
-                          color: isActive ? Colors.white : AppColors.slate400,
-                          fontSize: 12,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
+        // Period Filter
+        _buildPeriodFilter(),
+        const SizedBox(height: 24),
+
+        // Summary Card
+        _buildSummaryCard(recordsAsync, todayCountAsync),
+        const SizedBox(height: 24),
+
+        // Meal Records List
+        _buildRecordsList(recordsAsync),
+      ],
+    );
+  }
+
+  Widget _buildPeriodFilter() {
+    return Container(
+      padding: const EdgeInsets.all(4),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: AppColors.slate100),
+      ),
+      child: Row(
+        children: PeriodFilter.values.map((period) {
+          final isActive = period == _selectedPeriod;
+          return Expanded(
+            child: GestureDetector(
+              onTap: () => setState(() => _selectedPeriod = period),
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 200),
+                padding: const EdgeInsets.symmetric(vertical: 8),
+                decoration: BoxDecoration(
+                  color: isActive ? AppColors.primary600 : Colors.transparent,
+                  borderRadius: BorderRadius.circular(12),
+                  boxShadow: isActive
+                      ? [
+                          BoxShadow(
+                            color: AppColors.primary600.withAlpha(77),
+                            blurRadius: 8,
+                            offset: const Offset(0, 4),
+                          ),
+                        ]
+                      : [],
+                ),
+                child: Center(
+                  child: Text(
+                    period.shortLabel,
+                    style: TextStyle(
+                      color: isActive ? Colors.white : AppColors.slate400,
+                      fontSize: 11,
+                      fontWeight: FontWeight.bold,
                     ),
                   ),
                 ),
-              );
-            }).toList(),
-          ),
-        ),
-        
-        const SizedBox(height: 24),
-        
-        // Summary
-        const MealSummaryCard(
-          title: "Today's Summary",
-          meals: "2/3",
-          photos: "4",
-          calories: "800 kcal",
-        ),
-        
-        // Date Header
-        const Padding(
-          padding: EdgeInsets.only(bottom: 12.0),
-          child: Text(
-            'Dec 29 (Sun)',
-            style: TextStyle(
-              color: AppColors.slate800,
-              fontSize: 14,
-              fontWeight: FontWeight.bold,
+              ),
             ),
+          );
+        }).toList(),
+      ),
+    );
+  }
+
+  Widget _buildSummaryCard(
+    AsyncValue<List<MealRecord>> recordsAsync,
+    AsyncValue<int> todayCountAsync,
+  ) {
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(color: AppColors.slate100),
+      ),
+      child: recordsAsync.when(
+        data: (records) {
+          final totalCalories = records.fold<double>(
+            0,
+            (sum, r) => sum + (r.calories ?? 0),
+          );
+          final photosCount = records.where((r) => r.images != null && r.images!.isNotEmpty).length;
+
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                _selectedPeriod == PeriodFilter.today
+                    ? "Today's Summary"
+                    : "${_selectedPeriod.label} Summary",
+                style: const TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                  color: AppColors.slate800,
+                ),
+              ),
+              const SizedBox(height: 16),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceAround,
+                children: [
+                  _buildSummaryItem(
+                    icon: LucideIcons.utensils,
+                    value: todayCountAsync.when(
+                      data: (count) => '$count/3',
+                      loading: () => '-',
+                      error: (_, __) => '-',
+                    ),
+                    label: 'Meals',
+                    color: AppColors.primary600,
+                  ),
+                  _buildSummaryItem(
+                    icon: LucideIcons.camera,
+                    value: '$photosCount',
+                    label: 'Photos',
+                    color: AppColors.emerald500,
+                  ),
+                  _buildSummaryItem(
+                    icon: LucideIcons.flame,
+                    value: '${totalCalories.toInt()}',
+                    label: 'kcal',
+                    color: AppColors.orange500,
+                  ),
+                ],
+              ),
+            ],
+          );
+        },
+        loading: () => const Center(child: CircularProgressIndicator()),
+        error: (e, _) => Center(child: Text('Error: $e')),
+      ),
+    );
+  }
+
+  Widget _buildSummaryItem({
+    required IconData icon,
+    required String value,
+    required String label,
+    required Color color,
+  }) {
+    return Column(
+      children: [
+        Container(
+          padding: const EdgeInsets.all(12),
+          decoration: BoxDecoration(
+            color: color.withAlpha(25),
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: Icon(icon, color: color, size: 24),
+        ),
+        const SizedBox(height: 8),
+        Text(
+          value,
+          style: const TextStyle(
+            fontSize: 18,
+            fontWeight: FontWeight.bold,
+            color: AppColors.slate800,
           ),
         ),
-        const Divider(height: 1, color: AppColors.slate100),
-        const SizedBox(height: 16),
-        
-        // List
-        ..._mockLogs.map((log) => MealCard(log: log)),
+        Text(
+          label,
+          style: const TextStyle(
+            fontSize: 12,
+            color: AppColors.slate400,
+          ),
+        ),
       ],
     );
+  }
+
+  Widget _buildRecordsList(AsyncValue<List<MealRecord>> recordsAsync) {
+    return recordsAsync.when(
+      data: (records) {
+        if (records.isEmpty) {
+          return Center(
+            child: Padding(
+              padding: const EdgeInsets.all(40),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(LucideIcons.utensils, size: 48, color: AppColors.slate300),
+                  const SizedBox(height: 12),
+                  const Text(
+                    'No meal records yet',
+                    style: TextStyle(color: AppColors.slate400),
+                  ),
+                  const SizedBox(height: 8),
+                  const Text(
+                    'Start logging your meals!',
+                    style: TextStyle(color: AppColors.slate300, fontSize: 12),
+                  ),
+                ],
+              ),
+            ),
+          );
+        }
+
+        // Group records by date
+        final groupedRecords = _groupRecordsByDate(records);
+
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: groupedRecords.entries.map((entry) {
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Date Header
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 12.0),
+                  child: Text(
+                    _formatDateHeader(entry.key),
+                    style: const TextStyle(
+                      color: AppColors.slate800,
+                      fontSize: 14,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+                const Divider(height: 1, color: AppColors.slate100),
+                const SizedBox(height: 16),
+                // Meal Cards
+                ...entry.value.map((record) => MealCard(record: record)),
+                const SizedBox(height: 8),
+              ],
+            );
+          }).toList(),
+        );
+      },
+      loading: () => const Center(child: CircularProgressIndicator()),
+      error: (e, _) => Center(child: Text('Error: $e')),
+    );
+  }
+
+  Map<DateTime, List<MealRecord>> _groupRecordsByDate(List<MealRecord> records) {
+    final Map<DateTime, List<MealRecord>> grouped = {};
+    for (final record in records) {
+      final date = DateTime(
+        record.recordedAt.year,
+        record.recordedAt.month,
+        record.recordedAt.day,
+      );
+      grouped.putIfAbsent(date, () => []);
+      grouped[date]!.add(record);
+    }
+    return grouped;
+  }
+
+  String _formatDateHeader(DateTime date) {
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    final yesterday = today.subtract(const Duration(days: 1));
+
+    if (date == today) {
+      return 'Today';
+    } else if (date == yesterday) {
+      return 'Yesterday';
+    } else {
+      return DateFormat('MMM d (E)').format(date);
+    }
   }
 }

@@ -322,4 +322,5 @@ NotificationService.onMessageReceived((message) {
 The codebase is in the scaffolding phase. Directory structure is complete but most feature files await implementation. Focus on implementing one feature at a time following the established patterns.
 
 **Development rools:**
-.envは覗かないこと
+- .envは覗かないこと
+- /Users/hoshidayuuya/Documents/FIT-CONNECT-MOBILE/fit_connect_mobile/docs/IMPLEMENTATION_TASKS.mdを参考に実装すること、また進捗を随時更新すること

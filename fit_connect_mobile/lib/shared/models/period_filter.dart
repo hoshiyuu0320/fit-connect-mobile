@@ -31,6 +31,22 @@ enum PeriodFilter {
     }
   }
 
+  /// 短い表示用ラベル（英語）
+  String get shortLabel {
+    switch (this) {
+      case PeriodFilter.today:
+        return 'Today';
+      case PeriodFilter.week:
+        return 'Week';
+      case PeriodFilter.month:
+        return 'Month';
+      case PeriodFilter.threeMonths:
+        return '3M';
+      case PeriodFilter.all:
+        return 'All';
+    }
+  }
+
   /// フィルタに対応する開始日時を取得
   DateTime getStartDate() {
     final now = DateTime.now();
