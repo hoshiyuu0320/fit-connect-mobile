@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/widget_previews.dart';
 import 'package:fit_connect_mobile/core/theme/app_colors.dart';
+import 'package:fit_connect_mobile/core/theme/app_theme.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 
 class MealSummaryCard extends StatelessWidget {
@@ -93,4 +95,71 @@ class MealSummaryCard extends StatelessWidget {
       ],
     );
   }
+}
+
+// ============================================
+// Previews
+// ============================================
+
+@Preview(name: 'MealSummaryCard - Today')
+Widget previewMealSummaryCardToday() {
+  return MaterialApp(
+    theme: AppTheme.lightTheme,
+    home: Scaffold(
+      backgroundColor: const Color(0xFFF5F5F5),
+      body: SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: MealSummaryCard(
+            title: "Today's Summary",
+            meals: '2/3',
+            photos: '4',
+            calories: '1,250 kcal',
+          ),
+        ),
+      ),
+    ),
+  );
+}
+
+@Preview(name: 'MealSummaryCard - Week')
+Widget previewMealSummaryCardWeek() {
+  return MaterialApp(
+    theme: AppTheme.lightTheme,
+    home: Scaffold(
+      backgroundColor: const Color(0xFFF5F5F5),
+      body: SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: MealSummaryCard(
+            title: "This Week's Summary",
+            meals: '18/21',
+            photos: '24',
+            calories: '12,500 kcal',
+          ),
+        ),
+      ),
+    ),
+  );
+}
+
+@Preview(name: 'MealSummaryCard - Empty')
+Widget previewMealSummaryCardEmpty() {
+  return MaterialApp(
+    theme: AppTheme.lightTheme,
+    home: Scaffold(
+      backgroundColor: const Color(0xFFF5F5F5),
+      body: SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: MealSummaryCard(
+            title: "Today's Summary",
+            meals: '0/3',
+            photos: '0',
+            calories: '0 kcal',
+          ),
+        ),
+      ),
+    ),
+  );
 }

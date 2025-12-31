@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/widget_previews.dart';
 import 'package:fit_connect_mobile/core/theme/app_colors.dart';
+import 'package:fit_connect_mobile/core/theme/app_theme.dart';
 import 'package:fit_connect_mobile/features/meal_records/models/meal_record_model.dart';
 import 'package:intl/intl.dart';
 
@@ -132,3 +134,119 @@ class MealCard extends StatelessWidget {
     }
   }
 }
+
+// ============================================
+// Previews
+// ============================================
+
+@Preview(name: 'MealCard - Breakfast')
+Widget previewMealCardBreakfast() {
+  return MaterialApp(
+    theme: AppTheme.lightTheme,
+    home: Scaffold(
+      backgroundColor: const Color(0xFFF5F5F5),
+      body: SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: MealCard(record: _mockBreakfast),
+        ),
+      ),
+    ),
+  );
+}
+
+@Preview(name: 'MealCard - Lunch')
+Widget previewMealCardLunch() {
+  return MaterialApp(
+    theme: AppTheme.lightTheme,
+    home: Scaffold(
+      backgroundColor: const Color(0xFFF5F5F5),
+      body: SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: MealCard(record: _mockLunch),
+        ),
+      ),
+    ),
+  );
+}
+
+@Preview(name: 'MealCard - All Types')
+Widget previewMealCardAllTypes() {
+  return MaterialApp(
+    theme: AppTheme.lightTheme,
+    home: Scaffold(
+      backgroundColor: const Color(0xFFF5F5F5),
+      body: SafeArea(
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            children: [
+              MealCard(record: _mockBreakfast),
+              MealCard(record: _mockLunch),
+              MealCard(record: _mockDinner),
+              MealCard(record: _mockSnack),
+            ],
+          ),
+        ),
+      ),
+    ),
+  );
+}
+
+// Mock data for previews
+final _mockBreakfast = MealRecord(
+  id: '1',
+  clientId: 'client-1',
+  mealType: 'breakfast',
+  notes: 'オートミール、バナナ、プロテインシェイク',
+  images: null,
+  calories: 380,
+  recordedAt: DateTime.now(),
+  source: 'manual',
+  messageId: null,
+  createdAt: DateTime.now(),
+  updatedAt: DateTime.now(),
+);
+
+final _mockLunch = MealRecord(
+  id: '2',
+  clientId: 'client-1',
+  mealType: 'lunch',
+  notes: 'グリルチキンサラダ、玄米おにぎり、味噌汁',
+  images: ['https://picsum.photos/seed/lunch/200/200'],
+  calories: 520,
+  recordedAt: DateTime.now(),
+  source: 'message',
+  messageId: 'msg-1',
+  createdAt: DateTime.now(),
+  updatedAt: DateTime.now(),
+);
+
+final _mockDinner = MealRecord(
+  id: '3',
+  clientId: 'client-1',
+  mealType: 'dinner',
+  notes: '鮭のムニエル、温野菜、もち麦ごはん',
+  images: null,
+  calories: 580,
+  recordedAt: DateTime.now(),
+  source: 'manual',
+  messageId: null,
+  createdAt: DateTime.now(),
+  updatedAt: DateTime.now(),
+);
+
+final _mockSnack = MealRecord(
+  id: '4',
+  clientId: 'client-1',
+  mealType: 'snack',
+  notes: 'ミックスナッツ、ギリシャヨーグルト',
+  images: null,
+  calories: 200,
+  recordedAt: DateTime.now(),
+  source: 'manual',
+  messageId: null,
+  createdAt: DateTime.now(),
+  updatedAt: DateTime.now(),
+);

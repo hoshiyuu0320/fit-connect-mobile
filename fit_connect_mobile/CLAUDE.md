@@ -321,6 +321,75 @@ NotificationService.onMessageReceived((message) {
 **Current State:**
 The codebase is in the scaffolding phase. Directory structure is complete but most feature files await implementation. Focus on implementing one feature at a time following the established patterns.
 
-**Development rools:**
+**Development Rules:**
 - .envは覗かないこと
-- /Users/hoshidayuuya/Documents/FIT-CONNECT-MOBILE/fit_connect_mobile/docs/IMPLEMENTATION_TASKS.mdを参考に実装すること、また進捗を随時更新すること
+- 実装に関しては`docs/IMPLEMENTATION_TASKS.md`を参照して実装すること、また進捗を随時更新すること
+- UIの作成・更新を行った場合、該当するUIのプレビュー関数を作成すること
+
+### UI Preview Functions (Flutter Widget Previewer)
+
+Flutter 3.35+のWidget Previewer機能を使用してUI開発を行います。
+
+**基本パターン:**
+```dart
+import 'package:flutter/widget_previews.dart';
+
+// Widget/Screenファイルの末尾にプレビュー関数を追加
+
+@Preview(name: 'WidgetName - State')
+Widget previewWidgetNameState() {
+  return MaterialApp(
+    theme: AppTheme.lightTheme,
+    home: Scaffold(
+      backgroundColor: const Color(0xFFF5F5F5),
+      body: SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: YourWidget(...),
+        ),
+      ),
+    ),
+  );
+}
+```
+
+**Riverpodを使用するScreenの場合:**
+
+Riverpodプロバイダーを使用するScreenはプロバイダーのオーバーライドが複雑なため、静的なヘルパーWidgetを作成してプレビューします。
+
+```dart
+// 静的プレビュー用ヘルパーWidget
+class _PreviewComponentName extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    // プロバイダーを使わずにUIを再現
+    return Container(...);
+  }
+}
+
+@Preview(name: 'ScreenName - Static Preview')
+Widget previewScreenNameStatic() {
+  return MaterialApp(
+    theme: AppTheme.lightTheme,
+    home: Scaffold(
+      body: SafeArea(
+        child: ListView(
+          children: [
+            _PreviewComponentA(),
+            _PreviewComponentB(),
+          ],
+        ),
+      ),
+    ),
+  );
+}
+```
+
+**参考実装:** `lib/features/meal_records/presentation/screens/meal_record_screen.dart`
+
+**プレビュー関数の命名規則:**
+- `preview{WidgetName}{State}()` - 例: `previewMealCardBreakfast()`
+- 複数の状態をプレビュー - Empty, Loading, WithData など
+
+**プレビュー関数の機動コマンド:**
+flutter widget-preview start

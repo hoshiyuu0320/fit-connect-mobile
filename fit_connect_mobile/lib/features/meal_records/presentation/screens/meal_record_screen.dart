@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/widget_previews.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:fit_connect_mobile/core/theme/app_colors.dart';
+import 'package:fit_connect_mobile/core/theme/app_theme.dart';
 import 'package:fit_connect_mobile/features/meal_records/models/meal_record_model.dart';
 import 'package:fit_connect_mobile/features/meal_records/providers/meal_records_provider.dart';
 import 'package:fit_connect_mobile/features/meal_records/presentation/widgets/meal_card.dart';
@@ -286,3 +288,255 @@ class _MealRecordScreenState extends ConsumerState<MealRecordScreen> {
     }
   }
 }
+
+// ============================================
+// Previews
+// ============================================
+
+// Note: MealRecordScreen uses Riverpod providers.
+// For full screen preview, run the app with mock data.
+// Below are static previews of individual components.
+
+@Preview(name: 'MealRecordScreen - Static Preview')
+Widget previewMealRecordScreenStatic() {
+  return MaterialApp(
+    theme: AppTheme.lightTheme,
+    home: Scaffold(
+      backgroundColor: const Color(0xFFF5F5F5),
+      body: SafeArea(
+        child: ListView(
+          padding: const EdgeInsets.all(16),
+          children: [
+            // Period Filter Preview
+            _PreviewPeriodFilter(),
+            const SizedBox(height: 24),
+
+            // Summary Card Preview
+            _PreviewSummaryCard(),
+            const SizedBox(height: 24),
+
+            // Records List Preview
+            _PreviewRecordsList(),
+          ],
+        ),
+      ),
+    ),
+  );
+}
+
+@Preview(name: 'MealRecordScreen - Empty State')
+Widget previewMealRecordScreenEmpty() {
+  return MaterialApp(
+    theme: AppTheme.lightTheme,
+    home: Scaffold(
+      backgroundColor: const Color(0xFFF5F5F5),
+      body: SafeArea(
+        child: ListView(
+          padding: const EdgeInsets.all(16),
+          children: [
+            // Period Filter Preview
+            _PreviewPeriodFilter(),
+            const SizedBox(height: 24),
+
+            // Empty Summary Card
+            _PreviewSummaryCardEmpty(),
+            const SizedBox(height: 24),
+
+            // Empty State
+            Center(
+              child: Padding(
+                padding: const EdgeInsets.all(40),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(LucideIcons.utensils, size: 48, color: AppColors.slate300),
+                    const SizedBox(height: 12),
+                    const Text(
+                      'No meal records yet',
+                      style: TextStyle(color: AppColors.slate400),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    ),
+  );
+}
+
+// Preview helper widgets
+class _PreviewPeriodFilter extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(4),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: AppColors.slate100),
+      ),
+      child: Row(
+        children: ['Today', 'Week', 'Month', '3M', 'All'].asMap().entries.map((entry) {
+          final isActive = entry.key == 0;
+          return Expanded(
+            child: Container(
+              padding: const EdgeInsets.symmetric(vertical: 8),
+              decoration: BoxDecoration(
+                color: isActive ? AppColors.primary600 : Colors.transparent,
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Center(
+                child: Text(
+                  entry.value,
+                  style: TextStyle(
+                    color: isActive ? Colors.white : AppColors.slate400,
+                    fontSize: 11,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+            ),
+          );
+        }).toList(),
+      ),
+    );
+  }
+}
+
+class _PreviewSummaryCard extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(color: AppColors.slate100),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            "Today's Summary",
+            style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: AppColors.slate800),
+          ),
+          const SizedBox(height: 16),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceAround,
+            children: [
+              _buildItem(LucideIcons.utensils, '3/3', 'Meals', AppColors.primary600),
+              _buildItem(LucideIcons.camera, '4', 'Photos', AppColors.emerald500),
+              _buildItem(LucideIcons.flame, '1,100', 'kcal', AppColors.orange500),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildItem(IconData icon, String value, String label, Color color) {
+    return Column(
+      children: [
+        Container(
+          padding: const EdgeInsets.all(12),
+          decoration: BoxDecoration(color: color.withAlpha(25), borderRadius: BorderRadius.circular(12)),
+          child: Icon(icon, color: color, size: 24),
+        ),
+        const SizedBox(height: 8),
+        Text(value, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: AppColors.slate800)),
+        Text(label, style: const TextStyle(fontSize: 12, color: AppColors.slate400)),
+      ],
+    );
+  }
+}
+
+class _PreviewSummaryCardEmpty extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(color: AppColors.slate100),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            "Today's Summary",
+            style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: AppColors.slate800),
+          ),
+          const SizedBox(height: 16),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceAround,
+            children: [
+              _PreviewSummaryCard()._buildItem(LucideIcons.utensils, '0/3', 'Meals', AppColors.primary600),
+              _PreviewSummaryCard()._buildItem(LucideIcons.camera, '0', 'Photos', AppColors.emerald500),
+              _PreviewSummaryCard()._buildItem(LucideIcons.flame, '0', 'kcal', AppColors.orange500),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _PreviewRecordsList extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text('Today', style: TextStyle(color: AppColors.slate800, fontSize: 14, fontWeight: FontWeight.bold)),
+        const Divider(height: 24, color: AppColors.slate100),
+        ..._mockMealRecords.map((record) => MealCard(record: record)),
+      ],
+    );
+  }
+}
+
+// Mock data for previews
+final _mockMealRecords = [
+  MealRecord(
+    id: '1',
+    clientId: 'client-1',
+    mealType: 'breakfast',
+    notes: 'オートミール、バナナ、プロテインシェイク',
+    images: null,
+    calories: 380,
+    recordedAt: DateTime.now().subtract(const Duration(hours: 5)),
+    source: 'manual',
+    messageId: null,
+    createdAt: DateTime.now(),
+    updatedAt: DateTime.now(),
+  ),
+  MealRecord(
+    id: '2',
+    clientId: 'client-1',
+    mealType: 'lunch',
+    notes: 'グリルチキンサラダ、玄米おにぎり、味噌汁',
+    images: ['https://picsum.photos/seed/lunch/200/200'],
+    calories: 520,
+    recordedAt: DateTime.now().subtract(const Duration(hours: 2)),
+    source: 'message',
+    messageId: 'msg-1',
+    createdAt: DateTime.now(),
+    updatedAt: DateTime.now(),
+  ),
+  MealRecord(
+    id: '3',
+    clientId: 'client-1',
+    mealType: 'snack',
+    notes: 'ミックスナッツ、ギリシャヨーグルト',
+    images: null,
+    calories: 200,
+    recordedAt: DateTime.now().subtract(const Duration(hours: 1)),
+    source: 'manual',
+    messageId: null,
+    createdAt: DateTime.now(),
+    updatedAt: DateTime.now(),
+  ),
+];
