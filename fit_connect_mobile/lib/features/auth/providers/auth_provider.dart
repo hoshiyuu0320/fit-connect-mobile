@@ -8,14 +8,27 @@ part 'auth_provider.g.dart';
 /// 認証状態を管理するProvider
 @riverpod
 class AuthNotifier extends _$AuthNotifier {
+  String? _lastUserId;
+
   @override
   Future<app.User?> build() async {
+    // 現在のユーザーIDを記録（変更検知用）
+    final currentUserId = SupabaseService.client.auth.currentUser?.id;
+    _lastUserId = currentUserId;
+
     // 認証状態の変更を監視
     final subscription = SupabaseService.client.auth.onAuthStateChange.listen(
       (data) {
-        if (data.event == AuthChangeEvent.signedIn ||
-            data.event == AuthChangeEvent.signedOut ||
-            data.event == AuthChangeEvent.tokenRefreshed) {
+        // tokenRefreshedは除外
+        if (data.event != AuthChangeEvent.signedIn &&
+            data.event != AuthChangeEvent.signedOut) {
+          return;
+        }
+
+        // ユーザーIDが実際に変わった場合のみ再評価
+        final newUserId = data.session?.user.id;
+        if (newUserId != _lastUserId) {
+          print('[DEBUG] AuthNotifier: user changed from $_lastUserId to $newUserId, invalidating...');
           ref.invalidateSelf();
         }
       },
@@ -31,19 +44,30 @@ class AuthNotifier extends _$AuthNotifier {
 
   /// 現在のユーザー情報を取得
   Future<app.User?> _fetchCurrentUser() async {
-    final session = SupabaseService.client.auth.currentSession;
-    if (session == null) return null;
+    print('[DEBUG] _fetchCurrentUser: 開始');
+
+    // currentUserを使用（セッション復元後は正しい値が返される）
+    final user = SupabaseService.client.auth.currentUser;
+    print('[DEBUG] _fetchCurrentUser: currentUser = $user, id = ${user?.id}');
+
+    if (user == null) {
+      print('[DEBUG] _fetchCurrentUser: user is null, returning null');
+      return null;
+    }
 
     try {
+      print('[DEBUG] _fetchCurrentUser: fetching profile...');
       final response = await SupabaseService.client
           .from('profiles')
           .select()
-          .eq('id', session.user.id)
+          .eq('id', user.id)
           .maybeSingle();
 
+      print('[DEBUG] _fetchCurrentUser: response = $response');
       if (response == null) return null;
       return app.User.fromJson(response);
     } catch (e) {
+      print('[DEBUG] _fetchCurrentUser: error = $e');
       return null;
     }
   }

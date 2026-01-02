@@ -8,20 +8,30 @@ part 'current_user_provider.g.dart';
 /// 現在のクライアント情報を取得するProvider
 @riverpod
 Future<Client?> currentClient(CurrentClientRef ref) async {
-  // 認証状態を監視
-  final user = ref.watch(authNotifierProvider).valueOrNull;
-  if (user == null) return null;
+  print('[DEBUG] currentClientProvider: 開始');
+
+  // 認証状態の完了を待つ（.futureで待機することで、ローディング中はawaitされる）
+  final user = await ref.watch(authNotifierProvider.future);
+  print('[DEBUG] currentClientProvider: user = $user, user.id = ${user?.id}');
+
+  if (user == null) {
+    print('[DEBUG] currentClientProvider: user is null, returning null');
+    return null;
+  }
 
   try {
+    print('[DEBUG] currentClientProvider: fetching client data...');
     final response = await SupabaseService.client
         .from('clients')
         .select()
         .eq('client_id', user.id)
         .maybeSingle();
 
+    print('[DEBUG] currentClientProvider: response = $response');
     if (response == null) return null;
     return Client.fromJson(response);
   } catch (e) {
+    print('[DEBUG] currentClientProvider: error = $e');
     return null;
   }
 }
@@ -38,4 +48,28 @@ String? currentClientId(CurrentClientIdRef ref) {
 String? currentTrainerId(CurrentTrainerIdRef ref) {
   final client = ref.watch(currentClientProvider).valueOrNull;
   return client?.trainerId;
+}
+
+/// トレーナーのプロフィール情報を取得するProvider
+@riverpod
+Future<Map<String, dynamic>?> trainerProfile(TrainerProfileRef ref) async {
+  // currentClientProviderを直接watchしてtrainer_idを取得
+  final client = await ref.watch(currentClientProvider.future);
+  final trainerId = client?.trainerId;
+
+  print('[DEBUG] trainerProfileProvider: trainerId = $trainerId');
+  if (trainerId == null) return null;
+
+  try {
+    final response = await SupabaseService.client
+        .from('profiles')
+        .select()
+        .eq('id', trainerId)
+        .maybeSingle();
+    print('[DEBUG] trainerProfileProvider: response = $response');
+    return response;
+  } catch (e) {
+    print('[DEBUG] trainerProfileProvider: error = $e');
+    return null;
+  }
 }

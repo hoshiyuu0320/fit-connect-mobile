@@ -1,4 +1,5 @@
 import 'package:json_annotation/json_annotation.dart';
+import 'package:fit_connect_mobile/shared/utils/date_time_converter.dart';
 
 part 'client_model.g.dart';
 
@@ -16,16 +17,20 @@ class Client {
   final double? initialWeight; // kg
   @JsonKey(name: 'target_weight')
   final double? targetWeight; // kg
+  @NullableDateTimeConverter()
   @JsonKey(name: 'goal_deadline')
   final DateTime? goalDeadline;
   @JsonKey(name: 'goal_description')
   final String? goalDescription;
+  @NullableDateTimeConverter()
   @JsonKey(name: 'goal_set_at')
   final DateTime? goalSetAt;
+  @NullableDateTimeConverter()
   @JsonKey(name: 'goal_achieved_at')
   final DateTime? goalAchievedAt;
   @JsonKey(name: 'profile_image_url')
   final String? profileImageUrl;
+  @DateTimeConverter()
   @JsonKey(name: 'created_at')
   final DateTime createdAt;
 

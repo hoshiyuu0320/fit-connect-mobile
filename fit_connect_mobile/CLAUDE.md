@@ -393,3 +393,9 @@ Widget previewScreenNameStatic() {
 
 **プレビュー関数の機動コマンド:**
 flutter widget-preview start
+
+**Edge Functionの起動コマンド:**
+supabase functions serve --no-verify-jwt
+
+**Edge Functionのデプロイコマンド:**
+supabase functions deploy parse-message-tags

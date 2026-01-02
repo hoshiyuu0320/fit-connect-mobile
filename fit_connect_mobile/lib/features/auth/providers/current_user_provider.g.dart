@@ -6,7 +6,7 @@ part of 'current_user_provider.dart';
 // RiverpodGenerator
 // **************************************************************************
 
-String _$currentClientHash() => r'e698aa72f8eba0997eac7a34b119fc5985e58d1a';
+String _$currentClientHash() => r'4f9c807c7debb163c021f583b1f445c0c4416543';
 
 /// 現在のクライアント情報を取得するProvider
 ///
@@ -63,5 +63,25 @@ final currentTrainerIdProvider = AutoDisposeProvider<String?>.internal(
 @Deprecated('Will be removed in 3.0. Use Ref instead')
 // ignore: unused_element
 typedef CurrentTrainerIdRef = AutoDisposeProviderRef<String?>;
+String _$trainerProfileHash() => r'1a47e740b674174ecd6847c651c6e42953b495be';
+
+/// トレーナーのプロフィール情報を取得するProvider
+///
+/// Copied from [trainerProfile].
+@ProviderFor(trainerProfile)
+final trainerProfileProvider =
+    AutoDisposeFutureProvider<Map<String, dynamic>?>.internal(
+  trainerProfile,
+  name: r'trainerProfileProvider',
+  debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
+      ? null
+      : _$trainerProfileHash,
+  dependencies: null,
+  allTransitiveDependencies: null,
+);
+
+@Deprecated('Will be removed in 3.0. Use Ref instead')
+// ignore: unused_element
+typedef TrainerProfileRef = AutoDisposeFutureProviderRef<Map<String, dynamic>?>;
 // ignore_for_file: type=lint
 // ignore_for_file: subtype_of_sealed_class, invalid_use_of_internal_member, invalid_use_of_visible_for_testing_member, deprecated_member_use_from_same_package

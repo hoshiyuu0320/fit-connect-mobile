@@ -19,6 +19,13 @@ class MessageBubble extends StatelessWidget {
     this.isSystem = false,
   });
 
+  /// メッセージからタグ部分を除去した本文を取得
+  String get _messageWithoutTags {
+    // タグパターン: #食事:朝食, #運動:筋トレ, #体重 など
+    final tagPattern = RegExp(r'#(食事|運動|体重)(?::[^\s]+)?');
+    return message.replaceAll(tagPattern, '').trim();
+  }
+
   @override
   Widget build(BuildContext context) {
     if (isSystem) {
@@ -42,6 +49,8 @@ class MessageBubble extends StatelessWidget {
         ),
       );
     }
+
+    final displayMessage = _messageWithoutTags;
 
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 4.0),
@@ -91,25 +100,26 @@ class MessageBubble extends StatelessWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      if (message.isNotEmpty)
+                      // Tags（先に表示）
+                      if (tags != null && tags!.isNotEmpty) ...[
+                        Wrap(
+                          spacing: 6,
+                          runSpacing: 6,
+                          children: tags!.map((tag) => _buildTag(tag, isUser)).toList(),
+                        ),
+                        if (displayMessage.isNotEmpty) const SizedBox(height: 8),
+                      ],
+
+                      // メッセージ本文（タグを除去して表示）
+                      if (displayMessage.isNotEmpty)
                         Text(
-                          message,
+                          displayMessage,
                           style: TextStyle(
                             color: isUser ? Colors.white : AppColors.slate800,
                             fontSize: 14,
                             height: 1.4,
                           ),
                         ),
-                      
-                      // Tags
-                      if (tags != null && tags!.isNotEmpty) ...[
-                        const SizedBox(height: 8),
-                        Wrap(
-                          spacing: 6,
-                          runSpacing: 6,
-                          children: tags!.map((tag) => _buildTag(tag, isUser)).toList(),
-                        ),
-                      ],
                       
                       // Images
                       if (images != null && images!.isNotEmpty) ...[
@@ -155,25 +165,50 @@ class MessageBubble extends StatelessWidget {
   }
 
   Widget _buildTag(String tag, bool isUser) {
-    String icon = '';
-    if (tag.contains('Dining')) icon = '🍽️';
-    if (tag.contains('Weight')) icon = '⚖️';
-    if (tag.contains('Activity')) icon = '🏃';
-    
+    String icon = _getTagIcon(tag);
+
+    // タグの表示テキスト（#がなければ追加）
+    final displayTag = tag.startsWith('#') ? tag : '#$tag';
+
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
       decoration: BoxDecoration(
         color: isUser ? Colors.white.withOpacity(0.2) : AppColors.primary50,
-        borderRadius: BorderRadius.circular(8),
+        borderRadius: BorderRadius.circular(12),
       ),
       child: Text(
-        '$icon $tag',
+        icon.isNotEmpty ? '$icon $displayTag' : displayTag,
         style: TextStyle(
           color: isUser ? Colors.white : AppColors.primary600,
-          fontSize: 10,
-          fontWeight: FontWeight.bold,
+          fontSize: 12,
+          fontWeight: FontWeight.w600,
         ),
       ),
     );
+  }
+
+  /// タグに応じたアイコンを取得
+  String _getTagIcon(String tag) {
+    // 食事タグ
+    if (tag.contains('朝食')) return '🌅'; // 朝食
+    if (tag.contains('昼食')) return '☀️'; // 昼食
+    if (tag.contains('夕食') || tag.contains('晩')) return '🌙'; // 夕食
+    if (tag.contains('間食')) return '🍪'; // 間食
+    if (tag.contains('食事')) return '🍽️'; // 食事（詳細なし）
+
+    // 運動タグ
+    if (tag.contains('筋トレ')) return '💪'; // 筋トレ
+    if (tag.contains('有酸素')) return '🏃'; // 有酸素
+    if (tag.contains('ランニング') || tag.contains('走')) return '🏃'; // ランニング
+    if (tag.contains('ウォーキング') || tag.contains('歩')) return '🚶'; // ウォーキング
+    if (tag.contains('自転車') || tag.contains('サイクリング')) return '🚴'; // サイクリング
+    if (tag.contains('水泳') || tag.contains('プール')) return '🏊'; // 水泳
+    if (tag.contains('ヨガ')) return '🧘'; // ヨガ
+    if (tag.contains('運動')) return '🏋️'; // 運動（詳細なし）
+
+    // 体重タグ
+    if (tag.contains('体重')) return '⚖️';
+
+    return '';
   }
 }

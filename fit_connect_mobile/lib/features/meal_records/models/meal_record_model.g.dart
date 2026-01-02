@@ -14,11 +14,14 @@ MealRecord _$MealRecordFromJson(Map<String, dynamic> json) => MealRecord(
       images:
           (json['images'] as List<dynamic>?)?.map((e) => e as String).toList(),
       calories: (json['calories'] as num?)?.toDouble(),
-      recordedAt: DateTime.parse(json['recorded_at'] as String),
+      recordedAt:
+          const DateTimeConverter().fromJson(json['recorded_at'] as String),
       source: json['source'] as String,
       messageId: json['message_id'] as String?,
-      createdAt: DateTime.parse(json['created_at'] as String),
-      updatedAt: DateTime.parse(json['updated_at'] as String),
+      createdAt:
+          const DateTimeConverter().fromJson(json['created_at'] as String),
+      updatedAt:
+          const DateTimeConverter().fromJson(json['updated_at'] as String),
     );
 
 Map<String, dynamic> _$MealRecordToJson(MealRecord instance) =>
@@ -29,9 +32,9 @@ Map<String, dynamic> _$MealRecordToJson(MealRecord instance) =>
       'notes': instance.notes,
       'images': instance.images,
       'calories': instance.calories,
-      'recorded_at': instance.recordedAt.toIso8601String(),
+      'recorded_at': const DateTimeConverter().toJson(instance.recordedAt),
       'source': instance.source,
       'message_id': instance.messageId,
-      'created_at': instance.createdAt.toIso8601String(),
-      'updated_at': instance.updatedAt.toIso8601String(),
+      'created_at': const DateTimeConverter().toJson(instance.createdAt),
+      'updated_at': const DateTimeConverter().toJson(instance.updatedAt),
     };

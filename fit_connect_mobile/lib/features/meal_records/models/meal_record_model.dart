@@ -1,4 +1,5 @@
 import 'package:json_annotation/json_annotation.dart';
+import 'package:fit_connect_mobile/shared/utils/date_time_converter.dart';
 
 part 'meal_record_model.g.dart';
 
@@ -12,13 +13,16 @@ class MealRecord {
   final String? notes;
   final List<String>? images;
   final double? calories;
+  @DateTimeConverter()
   @JsonKey(name: 'recorded_at')
   final DateTime recordedAt;
   final String source; // 'message' | 'manual'
   @JsonKey(name: 'message_id')
   final String? messageId;
+  @DateTimeConverter()
   @JsonKey(name: 'created_at')
   final DateTime createdAt;
+  @DateTimeConverter()
   @JsonKey(name: 'updated_at')
   final DateTime updatedAt;
 

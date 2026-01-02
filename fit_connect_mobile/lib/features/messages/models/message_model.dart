@@ -1,4 +1,5 @@
 import 'package:json_annotation/json_annotation.dart';
+import 'package:fit_connect_mobile/shared/utils/date_time_converter.dart';
 
 part 'message_model.g.dart';
 
@@ -19,14 +20,18 @@ class Message {
   final List<String>? tags;
   @JsonKey(name: 'reply_to_message_id')
   final String? replyToMessageId;
+  @DateTimeConverter()
   @JsonKey(name: 'created_at')
   final DateTime createdAt;
+  @NullableDateTimeConverter()
   @JsonKey(name: 'read_at')
   final DateTime? readAt;
+  @NullableDateTimeConverter()
   @JsonKey(name: 'edited_at')
   final DateTime? editedAt;
   @JsonKey(name: 'is_edited')
   final bool isEdited;
+  @DateTimeConverter()
   @JsonKey(name: 'updated_at')
   final DateTime updatedAt;
 

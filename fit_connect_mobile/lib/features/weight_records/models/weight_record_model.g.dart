@@ -11,11 +11,14 @@ WeightRecord _$WeightRecordFromJson(Map<String, dynamic> json) => WeightRecord(
       clientId: json['client_id'] as String,
       weight: (json['weight'] as num).toDouble(),
       notes: json['notes'] as String?,
-      recordedAt: DateTime.parse(json['recorded_at'] as String),
+      recordedAt:
+          const DateTimeConverter().fromJson(json['recorded_at'] as String),
       source: json['source'] as String,
       messageId: json['message_id'] as String?,
-      createdAt: DateTime.parse(json['created_at'] as String),
-      updatedAt: DateTime.parse(json['updated_at'] as String),
+      createdAt:
+          const DateTimeConverter().fromJson(json['created_at'] as String),
+      updatedAt:
+          const DateTimeConverter().fromJson(json['updated_at'] as String),
     );
 
 Map<String, dynamic> _$WeightRecordToJson(WeightRecord instance) =>
@@ -24,9 +27,9 @@ Map<String, dynamic> _$WeightRecordToJson(WeightRecord instance) =>
       'client_id': instance.clientId,
       'weight': instance.weight,
       'notes': instance.notes,
-      'recorded_at': instance.recordedAt.toIso8601String(),
+      'recorded_at': const DateTimeConverter().toJson(instance.recordedAt),
       'source': instance.source,
       'message_id': instance.messageId,
-      'created_at': instance.createdAt.toIso8601String(),
-      'updated_at': instance.updatedAt.toIso8601String(),
+      'created_at': const DateTimeConverter().toJson(instance.createdAt),
+      'updated_at': const DateTimeConverter().toJson(instance.updatedAt),
     };

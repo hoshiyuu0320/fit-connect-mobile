@@ -151,23 +151,31 @@ class ExerciseWeekCalendar extends ConsumerWidget {
                     ? Border.all(color: AppColors.primary600, width: 3)
                     : null,
               ),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  if (icon != null && !isFuture) ...[
-                    Text(
-                      icon,
-                      style: const TextStyle(fontSize: 16),
-                    ),
-                  ],
-                  Text(
-                    '${date.day}',
-                    style: TextStyle(
-                      fontSize: 11,
-                      color: isFuture ? AppColors.slate400 : AppColors.slate600,
-                    ),
+              child: FittedBox(
+                fit: BoxFit.scaleDown,
+                child: Padding(
+                  padding: const EdgeInsets.all(4),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      if (icon != null && !isFuture) ...[
+                        Text(
+                          icon,
+                          style: const TextStyle(fontSize: 18),
+                        ),
+                      ],
+                      Text(
+                        '${date.day}',
+                        style: TextStyle(
+                          fontSize: 12,
+                          color:
+                              isFuture ? AppColors.slate400 : AppColors.slate600,
+                        ),
+                      ),
+                    ],
                   ),
-                ],
+                ),
               ),
             ),
           ),
@@ -292,22 +300,30 @@ class _PreviewExerciseWeekCalendar extends StatelessWidget {
                                     color: AppColors.primary600, width: 3)
                                 : null,
                           ),
-                          child: Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              if (icon != null && !isFuture) ...[
-                                Text(icon, style: const TextStyle(fontSize: 16)),
-                              ],
-                              Text(
-                                '${date.day}',
-                                style: TextStyle(
-                                  fontSize: 11,
-                                  color: isFuture
-                                      ? AppColors.slate400
-                                      : AppColors.slate600,
-                                ),
+                          child: FittedBox(
+                            fit: BoxFit.scaleDown,
+                            child: Padding(
+                              padding: const EdgeInsets.all(4),
+                              child: Column(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  if (icon != null && !isFuture) ...[
+                                    Text(icon,
+                                        style: const TextStyle(fontSize: 18)),
+                                  ],
+                                  Text(
+                                    '${date.day}',
+                                    style: TextStyle(
+                                      fontSize: 12,
+                                      color: isFuture
+                                          ? AppColors.slate400
+                                          : AppColors.slate600,
+                                    ),
+                                  ),
+                                ],
                               ),
-                            ],
+                            ),
                           ),
                         ),
                       ),

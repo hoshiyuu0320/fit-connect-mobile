@@ -8,6 +8,7 @@ import 'package:fit_connect_mobile/features/messages/providers/messages_provider
 import 'package:fit_connect_mobile/features/messages/presentation/widgets/message_bubble.dart';
 import 'package:fit_connect_mobile/features/messages/presentation/widgets/chat_input.dart';
 import 'package:fit_connect_mobile/features/auth/providers/auth_provider.dart';
+import 'package:fit_connect_mobile/features/auth/providers/current_user_provider.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import 'package:intl/intl.dart';
 
@@ -20,41 +21,11 @@ class MessageScreen extends ConsumerStatefulWidget {
 
 class _MessageScreenState extends ConsumerState<MessageScreen> {
   final ScrollController _scrollController = ScrollController();
-  int _previousMessageCount = 0;
 
   @override
   void dispose() {
     _scrollController.dispose();
     super.dispose();
-  }
-
-  void _scrollToBottom({bool animated = true, bool isInitial = false}) {
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (!mounted) return;
-
-      // 初回表示時は少し遅延を入れてListViewが完全にビルドされるのを待つ
-      if (isInitial) {
-        Future.delayed(const Duration(milliseconds: 100), () {
-          if (mounted && _scrollController.hasClients) {
-            _scrollController.animateTo(
-              _scrollController.position.maxScrollExtent,
-              duration: const Duration(milliseconds: 600),
-              curve: Curves.easeInOutCubic,
-            );
-          }
-        });
-      } else if (_scrollController.hasClients) {
-        if (animated) {
-          _scrollController.animateTo(
-            _scrollController.position.maxScrollExtent,
-            duration: const Duration(milliseconds: 300),
-            curve: Curves.easeOut,
-          );
-        } else {
-          _scrollController.jumpTo(_scrollController.position.maxScrollExtent);
-        }
-      }
-    });
   }
 
   Future<void> _sendMessage(String text) async {
@@ -106,66 +77,57 @@ class _MessageScreenState extends ConsumerState<MessageScreen> {
   Widget build(BuildContext context) {
     final messagesAsync = ref.watch(messagesStreamProvider);
     final currentUser = ref.watch(authNotifierProvider).valueOrNull;
+    final trainerProfile = ref.watch(trainerProfileProvider).valueOrNull;
+    final trainerName = trainerProfile?['name'] as String? ?? 'トレーナー';
 
-    return Scaffold(
-      backgroundColor: AppColors.slate50,
-      appBar: _buildAppBar(),
-      body: Column(
-        children: [
-          Expanded(
-            child: messagesAsync.when(
-              data: (messages) {
-                // 新しいメッセージが来たら自動スクロール
-                if (messages.length > _previousMessageCount) {
-                  final isFirstLoad = _previousMessageCount == 0;
-                  _previousMessageCount = messages.length;
-
-                  if (isFirstLoad) {
-                    // 画面遷移時の初回表示
-                    _scrollToBottom(isInitial: true);
-                  } else {
-                    // 新規メッセージ受信時
-                    _scrollToBottom(animated: true);
+    return GestureDetector(
+      onTap: () => FocusScope.of(context).unfocus(),
+      child: Scaffold(
+        backgroundColor: AppColors.slate50,
+        appBar: _buildAppBar(trainerName),
+        body: Column(
+          children: [
+            Expanded(
+              child: messagesAsync.when(
+                data: (messages) {
+                  if (messages.isEmpty) {
+                    return _buildEmptyState();
                   }
-                }
 
-                if (messages.isEmpty) {
-                  return _buildEmptyState();
-                }
-
-                return _buildMessageList(messages, currentUser?.id);
-              },
-              loading: () => const Center(
-                child: CircularProgressIndicator(),
-              ),
-              error: (e, _) => Center(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(LucideIcons.alertCircle,
-                        size: 48, color: AppColors.rose800),
-                    const SizedBox(height: 16),
-                    Text(
-                      'メッセージの読み込みに失敗しました',
-                      style: TextStyle(color: AppColors.slate600),
-                    ),
-                    const SizedBox(height: 8),
-                    TextButton(
-                      onPressed: () => ref.invalidate(messagesStreamProvider),
-                      child: const Text('再試行'),
-                    ),
-                  ],
+                  return _buildMessageList(messages, currentUser?.id);
+                },
+                loading: () => const Center(
+                  child: CircularProgressIndicator(),
+                ),
+                error: (e, _) => Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(LucideIcons.alertCircle,
+                          size: 48, color: AppColors.rose800),
+                      const SizedBox(height: 16),
+                      Text(
+                        'メッセージの読み込みに失敗しました',
+                        style: TextStyle(color: AppColors.slate600),
+                      ),
+                      const SizedBox(height: 8),
+                      TextButton(
+                        onPressed: () => ref.invalidate(messagesStreamProvider),
+                        child: const Text('再試行'),
+                      ),
+                    ],
+                  ),
                 ),
               ),
             ),
-          ),
-          ChatInput(onSend: _sendMessage),
-        ],
+            ChatInput(onSend: _sendMessage),
+          ],
+        ),
       ),
     );
   }
 
-  PreferredSizeWidget _buildAppBar() {
+  PreferredSizeWidget _buildAppBar(String trainerName) {
     return AppBar(
       backgroundColor: Colors.white,
       elevation: 0,
@@ -182,12 +144,8 @@ class _MessageScreenState extends ConsumerState<MessageScreen> {
                   decoration: const BoxDecoration(
                     color: AppColors.slate200,
                     shape: BoxShape.circle,
-                    image: DecorationImage(
-                      image: NetworkImage(
-                          'https://picsum.photos/seed/trainer/100/100'),
-                      fit: BoxFit.cover,
-                    ),
                   ),
+                  child: const Icon(LucideIcons.user, color: AppColors.slate400),
                 ),
                 // TODO: オンラインステータス表示は後で実装する
                 // Positioned(
@@ -206,12 +164,12 @@ class _MessageScreenState extends ConsumerState<MessageScreen> {
               ],
             ),
             const SizedBox(width: 12),
-            const Column(
+            Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Coach Sarah',
-                  style: TextStyle(
+                  trainerName,
+                  style: const TextStyle(
                     color: AppColors.slate800,
                     fontSize: 14,
                     fontWeight: FontWeight.bold,
@@ -279,9 +237,12 @@ class _MessageScreenState extends ConsumerState<MessageScreen> {
       groupedMessages.putIfAbsent(dateKey, () => []).add(message);
     }
 
-    final sortedDates = groupedMessages.keys.toList()..sort();
+    // Sort dates in descending order (newest first) for reverse List
+    final sortedDates = groupedMessages.keys.toList()
+      ..sort((a, b) => b.compareTo(a));
 
     return ListView.builder(
+      reverse: true, // Start from bottom
       controller: _scrollController,
       padding: const EdgeInsets.all(16),
       itemCount: sortedDates.length,

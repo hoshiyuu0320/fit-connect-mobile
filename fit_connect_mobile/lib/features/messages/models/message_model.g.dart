@@ -18,15 +18,15 @@ Message _$MessageFromJson(Map<String, dynamic> json) => Message(
           .toList(),
       tags: (json['tags'] as List<dynamic>?)?.map((e) => e as String).toList(),
       replyToMessageId: json['reply_to_message_id'] as String?,
-      createdAt: DateTime.parse(json['created_at'] as String),
-      readAt: json['read_at'] == null
-          ? null
-          : DateTime.parse(json['read_at'] as String),
-      editedAt: json['edited_at'] == null
-          ? null
-          : DateTime.parse(json['edited_at'] as String),
+      createdAt:
+          const DateTimeConverter().fromJson(json['created_at'] as String),
+      readAt: const NullableDateTimeConverter()
+          .fromJson(json['read_at'] as String?),
+      editedAt: const NullableDateTimeConverter()
+          .fromJson(json['edited_at'] as String?),
       isEdited: json['is_edited'] as bool,
-      updatedAt: DateTime.parse(json['updated_at'] as String),
+      updatedAt:
+          const DateTimeConverter().fromJson(json['updated_at'] as String),
     );
 
 Map<String, dynamic> _$MessageToJson(Message instance) => <String, dynamic>{
@@ -39,9 +39,9 @@ Map<String, dynamic> _$MessageToJson(Message instance) => <String, dynamic>{
       'image_urls': instance.imageUrls,
       'tags': instance.tags,
       'reply_to_message_id': instance.replyToMessageId,
-      'created_at': instance.createdAt.toIso8601String(),
-      'read_at': instance.readAt?.toIso8601String(),
-      'edited_at': instance.editedAt?.toIso8601String(),
+      'created_at': const DateTimeConverter().toJson(instance.createdAt),
+      'read_at': const NullableDateTimeConverter().toJson(instance.readAt),
+      'edited_at': const NullableDateTimeConverter().toJson(instance.editedAt),
       'is_edited': instance.isEdited,
-      'updated_at': instance.updatedAt.toIso8601String(),
+      'updated_at': const DateTimeConverter().toJson(instance.updatedAt),
     };
