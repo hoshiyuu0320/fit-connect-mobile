@@ -5,14 +5,23 @@ import 'package:fit_connect_mobile/core/theme/app_theme.dart';
 import 'package:fit_connect_mobile/features/meal_records/models/meal_record_model.dart';
 import 'package:intl/intl.dart';
 
-class MealCard extends StatelessWidget {
+class MealCard extends StatefulWidget {
   final MealRecord record;
 
   const MealCard({super.key, required this.record});
 
   @override
+  State<MealCard> createState() => _MealCardState();
+}
+
+class _MealCardState extends State<MealCard> {
+  int _currentImageIndex = 0;
+
+  @override
   Widget build(BuildContext context) {
+    final record = widget.record;
     final (typeColor, textColor, icon, typeLabel) = _getMealTypeStyle(record.mealType);
+    final hasMultipleImages = record.images != null && record.images!.length > 1;
 
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
@@ -41,15 +50,60 @@ class MealCard extends StatelessWidget {
               borderRadius: BorderRadius.circular(12),
             ),
             child: record.images != null && record.images!.isNotEmpty
-                ? ClipRRect(
-                    borderRadius: BorderRadius.circular(12),
-                    child: Image.network(
-                      record.images!.first,
-                      fit: BoxFit.cover,
-                      errorBuilder: (_, __, ___) => Center(
-                        child: Text(icon, style: const TextStyle(fontSize: 32)),
+                ? Stack(
+                    children: [
+                      // Image PageView
+                      ClipRRect(
+                        borderRadius: BorderRadius.circular(12),
+                        child: PageView.builder(
+                          itemCount: record.images!.length,
+                          onPageChanged: (index) {
+                            setState(() {
+                              _currentImageIndex = index;
+                            });
+                          },
+                          itemBuilder: (context, index) {
+                            return Image.network(
+                              record.images![index],
+                              fit: BoxFit.cover,
+                              errorBuilder: (_, __, ___) => Center(
+                                child: Text(icon, style: const TextStyle(fontSize: 32)),
+                              ),
+                            );
+                          },
+                        ),
                       ),
-                    ),
+                      // Dot indicator (only show if multiple images)
+                      if (hasMultipleImages)
+                        Positioned(
+                          bottom: 4,
+                          left: 0,
+                          right: 0,
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: List.generate(
+                              record.images!.length,
+                              (index) => Container(
+                                width: 6,
+                                height: 6,
+                                margin: const EdgeInsets.symmetric(horizontal: 2),
+                                decoration: BoxDecoration(
+                                  shape: BoxShape.circle,
+                                  color: index == _currentImageIndex
+                                      ? Colors.white
+                                      : Colors.white.withAlpha(128),
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: Colors.black.withAlpha(50),
+                                      blurRadius: 2,
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                    ],
                   )
                 : Center(child: Text(icon, style: const TextStyle(fontSize: 32))),
           ),
@@ -61,20 +115,42 @@ class MealCard extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                  decoration: BoxDecoration(
-                    color: typeColor,
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: Text(
-                    typeLabel,
-                    style: TextStyle(
-                      color: textColor,
-                      fontSize: 10,
-                      fontWeight: FontWeight.bold,
+                Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                      decoration: BoxDecoration(
+                        color: typeColor,
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Text(
+                        typeLabel,
+                        style: TextStyle(
+                          color: textColor,
+                          fontSize: 10,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
                     ),
-                  ),
+                    // Image count badge
+                    if (hasMultipleImages) ...[
+                      const SizedBox(width: 6),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                        decoration: BoxDecoration(
+                          color: AppColors.slate100,
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: Text(
+                          '📷 ${record.images!.length}',
+                          style: const TextStyle(
+                            color: AppColors.slate500,
+                            fontSize: 10,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ],
                 ),
                 const SizedBox(height: 6),
                 Text(

@@ -1,12 +1,19 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:fit_connect_mobile/core/theme/app_colors.dart';
 import 'package:fit_connect_mobile/features/messages/presentation/widgets/tag_suggestion_list.dart';
+import 'package:fit_connect_mobile/services/storage_service.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 
 class ChatInput extends StatefulWidget {
-  final Function(String) onSend;
+  final Future<void> Function(String text, List<String>? imageUrls) onSend;
+  final String? userId;
 
-  const ChatInput({super.key, required this.onSend});
+  const ChatInput({
+    super.key,
+    required this.onSend,
+    this.userId,
+  });
 
   @override
   State<ChatInput> createState() => _ChatInputState();
@@ -18,6 +25,8 @@ class _ChatInputState extends State<ChatInput> {
   bool _showSuggestions = false;
   String _currentTagQuery = '';
   String? _selectedTagHint; // タグ選択後に表示するヒント（タグ以降の部分）
+  List<File> _selectedImages = []; // 選択された画像ファイル
+  bool _isUploading = false; // アップロード中フラグ
 
   @override
   void initState() {
@@ -135,41 +144,144 @@ class _ChatInputState extends State<ChatInput> {
 
   /// 送信可能かどうかを判定
   bool _canSend() {
-    final text = _controller.text.trim();
-    if (text.isEmpty) return false;
+    if (_isUploading) return false;
 
-    // タグが含まれている場合は、タグ以外の内容が必要
+    final text = _controller.text.trim();
+    final hasImages = _selectedImages.isNotEmpty;
+
+    // テキストも画像もない場合は送信不可
+    if (text.isEmpty && !hasImages) return false;
+
+    // タグが含まれている場合は、タグ以外の内容が必要（画像がある場合も可）
     final hasTag = RegExp(r'#(食事|運動|体重)').hasMatch(text);
-    if (hasTag) {
+    if (hasTag && !hasImages) {
       return _hasContentBesidesTag(text);
     }
 
-    // タグがない場合はそのまま送信可能
+    // タグがない場合、またはタグ+画像がある場合は送信可能
     return true;
   }
 
-  void _handleSend() {
-    final text = _controller.text.trim();
-    if (text.isEmpty) return;
-
-    // タグのみの場合はエラー表示
-    if (!_canSend()) {
+  /// 画像を選択
+  Future<void> _pickImage() async {
+    if (_selectedImages.length >= StorageService.maxImagesPerMessage) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('タグだけでなく、内容も入力してください'),
+        SnackBar(
+          content: Text('画像は最大${StorageService.maxImagesPerMessage}枚までです'),
           backgroundColor: AppColors.orange500,
-          duration: Duration(seconds: 2),
         ),
       );
       return;
     }
 
-    widget.onSend(_controller.text);
-    _controller.clear();
+    final file = await StorageService.showImagePickerDialog(context);
+    if (file != null) {
+      setState(() {
+        _selectedImages.add(file);
+      });
+    }
+  }
+
+  /// 選択した画像を削除
+  void _removeImage(int index) {
     setState(() {
-      _showSuggestions = false;
-      _selectedTagHint = null;
+      _selectedImages.removeAt(index);
     });
+  }
+
+  Future<void> _handleSend() async {
+    final text = _controller.text.trim();
+
+    // 送信可能かチェック
+    if (!_canSend()) {
+      if (text.isNotEmpty && RegExp(r'#(食事|運動|体重)').hasMatch(text)) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('タグだけでなく、内容も入力してください'),
+            backgroundColor: AppColors.orange500,
+            duration: Duration(seconds: 2),
+          ),
+        );
+      }
+      return;
+    }
+
+    // 画像がある場合はアップロード
+    List<String>? imageUrls;
+    if (_selectedImages.isNotEmpty) {
+      if (widget.userId == null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('ユーザー情報が取得できませんでした'),
+            backgroundColor: AppColors.rose800,
+          ),
+        );
+        return;
+      }
+
+      setState(() {
+        _isUploading = true;
+      });
+
+      try {
+        imageUrls = await StorageService.uploadImages(
+          _selectedImages,
+          widget.userId!,
+        );
+
+        if (imageUrls.isEmpty && _selectedImages.isNotEmpty) {
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('画像のアップロードに失敗しました'),
+                backgroundColor: AppColors.rose800,
+              ),
+            );
+          }
+          setState(() {
+            _isUploading = false;
+          });
+          return;
+        }
+      } catch (e) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('画像のアップロードに失敗しました: $e'),
+              backgroundColor: AppColors.rose800,
+            ),
+          );
+        }
+        setState(() {
+          _isUploading = false;
+        });
+        return;
+      }
+    }
+
+    // メッセージ送信
+    try {
+      await widget.onSend(text, imageUrls);
+      _controller.clear();
+      setState(() {
+        _showSuggestions = false;
+        _selectedTagHint = null;
+        _selectedImages = [];
+        _isUploading = false;
+      });
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('送信に失敗しました: $e'),
+            backgroundColor: AppColors.rose800,
+          ),
+        );
+      }
+      setState(() {
+        _isUploading = false;
+      });
+    }
   }
 
   @override
@@ -201,6 +313,56 @@ class _ChatInputState extends State<ChatInput> {
               ),
             ),
           ),
+        // 画像プレビュー
+        if (_selectedImages.isNotEmpty)
+          Container(
+            height: 80,
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            decoration: const BoxDecoration(
+              color: Colors.white,
+              border: Border(top: BorderSide(color: AppColors.slate100)),
+            ),
+            child: ListView.separated(
+              scrollDirection: Axis.horizontal,
+              itemCount: _selectedImages.length,
+              separatorBuilder: (_, __) => const SizedBox(width: 8),
+              itemBuilder: (context, index) {
+                return Stack(
+                  children: [
+                    ClipRRect(
+                      borderRadius: BorderRadius.circular(8),
+                      child: Image.file(
+                        _selectedImages[index],
+                        width: 64,
+                        height: 64,
+                        fit: BoxFit.cover,
+                      ),
+                    ),
+                    Positioned(
+                      top: -4,
+                      right: -4,
+                      child: GestureDetector(
+                        onTap: () => _removeImage(index),
+                        child: Container(
+                          width: 20,
+                          height: 20,
+                          decoration: const BoxDecoration(
+                            color: AppColors.rose800,
+                            shape: BoxShape.circle,
+                          ),
+                          child: const Icon(
+                            LucideIcons.x,
+                            color: Colors.white,
+                            size: 12,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                );
+              },
+            ),
+          ),
         Container(
           padding: const EdgeInsets.all(16),
           decoration: const BoxDecoration(
@@ -221,10 +383,37 @@ class _ChatInputState extends State<ChatInput> {
                     child: Row(
                       children: [
                         const SizedBox(width: 8),
-                        IconButton(
-                          icon: const Icon(LucideIcons.camera,
-                              color: AppColors.slate400, size: 20),
-                          onPressed: () {},
+                        Stack(
+                          children: [
+                            IconButton(
+                              icon: const Icon(LucideIcons.camera,
+                                  color: AppColors.slate400, size: 20),
+                              onPressed: _isUploading ? null : _pickImage,
+                            ),
+                            if (_selectedImages.isNotEmpty)
+                              Positioned(
+                                top: 4,
+                                right: 4,
+                                child: Container(
+                                  width: 16,
+                                  height: 16,
+                                  decoration: const BoxDecoration(
+                                    color: AppColors.primary600,
+                                    shape: BoxShape.circle,
+                                  ),
+                                  child: Center(
+                                    child: Text(
+                                      '${_selectedImages.length}',
+                                      style: const TextStyle(
+                                        color: Colors.white,
+                                        fontSize: 10,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ),
+                          ],
                         ),
                         Expanded(
                           child: TextField(
@@ -232,6 +421,7 @@ class _ChatInputState extends State<ChatInput> {
                             focusNode: _focusNode,
                             maxLines: 4,
                             minLines: 1,
+                            enabled: !_isUploading,
                             decoration: const InputDecoration(
                               hintText: 'Message... (# for tags)',
                               border: InputBorder.none,
@@ -264,15 +454,24 @@ class _ChatInputState extends State<ChatInput> {
                       boxShadow: _canSend()
                           ? [
                               BoxShadow(
-                                color: AppColors.primary600.withOpacity(0.3),
+                                color: AppColors.primary600.withValues(alpha: 0.3),
                                 blurRadius: 8,
                                 offset: const Offset(0, 4),
                               ),
                             ]
                           : null,
                     ),
-                    child: const Icon(LucideIcons.send,
-                        color: Colors.white, size: 20),
+                    child: _isUploading
+                        ? const SizedBox(
+                            width: 20,
+                            height: 20,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              color: Colors.white,
+                            ),
+                          )
+                        : const Icon(LucideIcons.send,
+                            color: Colors.white, size: 20),
                   ),
                 ),
               ],

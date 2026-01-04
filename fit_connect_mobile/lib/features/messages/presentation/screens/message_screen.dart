@@ -28,8 +28,8 @@ class _MessageScreenState extends ConsumerState<MessageScreen> {
     super.dispose();
   }
 
-  Future<void> _sendMessage(String text) async {
-    if (text.trim().isEmpty) return;
+  Future<void> _sendMessage(String text, List<String>? imageUrls) async {
+    if (text.trim().isEmpty && (imageUrls == null || imageUrls.isEmpty)) return;
 
     // Parse tags from message
     List<String>? tags;
@@ -40,6 +40,8 @@ class _MessageScreenState extends ConsumerState<MessageScreen> {
         tags = ['食事:昼食'];
       } else if (text.contains('夕食') || text.contains('dinner')) {
         tags = ['食事:夕食'];
+      } else if (text.contains('間食') || text.contains('snack')) {
+        tags = ['食事:間食'];
       } else {
         tags = ['食事'];
       }
@@ -58,6 +60,7 @@ class _MessageScreenState extends ConsumerState<MessageScreen> {
     try {
       await ref.read(messagesNotifierProvider.notifier).sendMessage(
             content: text,
+            imageUrls: imageUrls,
             tags: tags,
           );
       // スクロールは messagesAsync.when の data コールバックで自動的に行われる
@@ -120,7 +123,10 @@ class _MessageScreenState extends ConsumerState<MessageScreen> {
                 ),
               ),
             ),
-            ChatInput(onSend: _sendMessage),
+            ChatInput(
+              onSend: _sendMessage,
+              userId: currentUser?.id,
+            ),
           ],
         ),
       ),

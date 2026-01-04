@@ -3,7 +3,12 @@
 <plist version="1.0">
 <dict>
 	<key>CFBundleDevelopmentRegion</key>
-	<string>$(DEVELOPMENT_LANGUAGE)</string>
+	<string>ja</string>
+	<key>CFBundleLocalizations</key>
+	<array>
+		<string>ja</string>
+		<string>en</string>
+	</array>
 	<key>CFBundleDisplayName</key>
 	<string>Fit Connect Mobile</string>
 	<key>CFBundleExecutable</key>
@@ -45,6 +50,11 @@
 	<true/>
 	<key>UIApplicationSupportsIndirectInputEvents</key>
 	<true/>
+	<!-- Camera and Photo Library permissions -->
+	<key>NSCameraUsageDescription</key>
+	<string>食事や運動の記録に写真を撮影するためにカメラを使用します</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>食事や運動の記録に写真を添付するためにフォトライブラリにアクセスします</string>
 	<key>CFBundleURLTypes</key>
 	<array>
 	<dict>
