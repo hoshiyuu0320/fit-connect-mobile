@@ -1,9 +1,9 @@
 # FIT-CONNECT Mobile - 実装タスク一覧
 
 **作成日**: 2025年12月30日
-**バージョン**: 1.9
-**進捗状況**: 全体 90% 完了
-**最終更新**: 2026年1月4日 - 画像添付機能実装、Supabase Storage統合、iOSカメラ権限設定
+**バージョン**: 2.1
+**進捗状況**: 全体 94% 完了
+**最終更新**: 2026年1月11日 - UI日本語対応、達成率ロジック修正、ログイン画面レスポンシブ対応
 
 ---
 
@@ -28,7 +28,7 @@
 
 | カテゴリ | 進捗 | 状態 |
 |---------|------|------|
-| **UI/画面レイアウト** | 98% | 🟡 進行中 |
+| **UI/画面レイアウト** | 100% | 🟢 完了 |
 | **データモデル** | 100% | 🟢 完了 |
 | **Repositoryレイヤー** | 100% | 🟢 完了 |
 | **Riverpod Provider** | 100% | 🟢 完了 |
@@ -36,7 +36,8 @@
 | **Supabase Storage** | 100% | 🟢 完了 |
 | **リアルタイム機能** | 90% | 🟡 進行中 |
 | **Edge Functions** | 80% | 🟡 進行中 |
-| **UIプレビュー関数** | 85% | 🟡 進行中 |
+| **UIプレビュー関数** | 90% | 🟡 進行中 |
+| **日本語対応** | 100% | 🟢 完了 |
 | **テスト** | 0% | 🔴 未着手 |
 
 ### 完了済み項目
@@ -47,7 +48,7 @@
 - ✅ Supabase Service 初期化
 - ✅ 基本的な画面レイアウト（ホーム、メッセージ、記録）
 - ✅ ボトムナビゲーション
-- ✅ ログイン画面UI
+- ✅ ログイン画面UI（レスポンシブ対応済み）
 - ✅ 認証ルーティング
 - ✅ データベースマイグレーション（RLSポリシー追加）
 - ✅ データモデル作成（8ファイル）
@@ -93,6 +94,23 @@
   - ✅ アップロード中ローディング表示
   - ✅ iOSカメラ・フォトライブラリ権限設定
   - ✅ iOSローカライゼーション設定（日本語UI）
+- ✅ **目標達成機能実装**
+  - ✅ GoalAchievementProvider作成（達成状態監視）
+  - ✅ GoalAchievementOverlay作成（Confettiアニメーション付きお祝いモーダル）
+  - ✅ MainScreenに達成検知・お祝い表示ロジック追加
+  - ✅ GoalCard達成時の特別表示（ゴールド背景、トロフィーアイコン）
+  - ✅ UIプレビュー関数作成（GoalCard - In Progress / Achieved）
+- ✅ **UI日本語対応（ローカライゼーション）**
+  - ✅ GoalCard: 全ラベル日本語化（目標進捗、現在、目標、残り/達成/超過、達成率、期限）
+  - ✅ WeightRecordScreen: 日本語化（現在、目標、残り/達成/超過、達成率、開始時比、体重推移、最近の記録）
+  - ✅ DailySummaryCard: 日本語化（今日のまとめ、体重、食事、運動、今週、/7日、データなし）
+  - ✅ 動的ラベル対応（残り/達成/超過 - 減量・増量両対応）
+- ✅ **達成率ロジック修正**
+  - ✅ GoalCard: 増量目標で逆方向（体重減少）の場合に正しく0%表示されるよう修正
+  - ✅ 方向を考慮した進捗計算（減量: initial→target減少、増量: initial→target増加）
+- ✅ **ログイン画面レスポンシブ対応**
+  - ✅ iPhone 12 miniなど小さい端末でキーボード表示時のオーバーフロー修正
+  - ✅ SingleChildScrollView + LayoutBuilder + ConstrainedBox対応
 
 ---
 
@@ -287,32 +305,36 @@
 
 #### タスク
 
-- [ ] **4.1 目標表示**
-  - [ ] ホーム画面の目標カード実データ化（lib/features/home/presentation/widgets/goal_card.dart）
-  - [ ] 達成率計算ロジック実装
-    - [ ] Database Function: `calculate_achievement_rate(client_id, weight)`
-    - [ ] 減量目標/増量目標の判定
-    - [ ] 達成率 = (開始時体重 - 現在の体重) / (開始時体重 - 目標体重) × 100
-  - [ ] 目標期日の表示（任意）
+- [x] **4.1 目標表示** ✅
+  - [x] ホーム画面の目標カード実データ化（lib/features/home/presentation/widgets/goal_card.dart）
+  - [x] 達成率計算ロジック実装
+    - [x] Database Function: `calculate_achievement_rate(client_id, weight)` ✅ 既存
+    - [x] 減量目標/増量目標の判定
+    - [x] 達成率 = (開始時体重 - 現在の体重) / (開始時体重 - 目標体重) × 100
+  - [x] 目標期日の表示（任意）
   - [ ] 目標詳細説明の表示（任意）
 
-- [ ] **4.2 目標達成判定**
-  - [ ] Database Function: `check_goal_achievement(client_id, weight)`
-    - [ ] 減量目標: currentWeight <= targetWeight
-    - [ ] 増量目標: currentWeight >= targetWeight
-    - [ ] 達成時に `clients.goal_achieved_at` を更新
-  - [ ] 体重記録作成トリガーでの自動判定
+- [x] **4.2 目標達成判定** ✅
+  - [x] Database Function: `check_goal_achievement(client_id, weight)` ✅ 既存
+    - [x] 減量目標: currentWeight <= targetWeight
+    - [x] 増量目標: currentWeight >= targetWeight
+    - [x] 達成時に `clients.goal_achieved_at` を更新
+  - [x] 体重記録作成トリガーでの自動判定（Edge Function内で実装済み）
 
-- [ ] **4.3 目標達成演出**
-  - [ ] 目標達成画面作成（lib/features/goals/presentation/screens/goal_achieved_screen.dart）
-    - [ ] トロフィーアイコン表示
-    - [ ] 「おめでとう!」メッセージ
-    - [ ] 開始時〜現在の変化表示
-    - [ ] 「トレーナーに報告」ボタン
-  - [ ] 紙吹雪アニメーション実装（confettiパッケージ使用）
-    - [ ] 5秒間の演出
-    - [ ] アニメーション終了後に達成画面表示
-  - [ ] プッシュ通知送信
+- [x] **4.3 目標達成演出** ✅
+  - [x] 目標達成オーバーレイ作成（lib/features/goals/presentation/widgets/goal_achievement_overlay.dart）
+    - [x] トロフィーアイコン表示
+    - [x] 「目標達成！」メッセージ
+    - [x] 目標体重表示
+    - [x] 「閉じる」ボタン
+  - [x] 紙吹雪アニメーション実装（confettiパッケージ使用）
+    - [x] 5秒間の演出
+    - [x] スケールアニメーション付きカード表示
+  - [x] GoalCard達成時の特別表示
+    - [x] ゴールド背景のグラデーション
+    - [x] トロフィーアイコン表示
+    - [x] 100%バッジ表示
+  - [ ] プッシュ通知送信（将来実装）
     - [ ] クライアントへの通知
     - [ ] トレーナーへの通知（Web側）
 
@@ -844,9 +866,9 @@
 
 ## 目標管理
 
-### 未実装タスク（0% 完了）
+### 実装状況（80% 完了）
 
-- [ ] **Database Functions作成**
+- [x] **Database Functions作成** ✅ 既存
   ```sql
   -- 目標達成判定
   CREATE OR REPLACE FUNCTION check_goal_achievement(
@@ -906,18 +928,23 @@
   $$ LANGUAGE plpgsql;
   ```
 
-- [ ] **目標達成画面**
-  - 画面: lib/features/goals/presentation/screens/goal_achieved_screen.dart
-  - トロフィーアイコン（Material Icons: `EmojiEvents`）
-  - 開始時〜現在の変化グラフ
-  - 「トレーナーに報告」ボタン
+- [x] **目標達成オーバーレイ** ✅
+  - ファイル: lib/features/goals/presentation/widgets/goal_achievement_overlay.dart
+  - トロフィーアイコン（Lucide Icons: `trophy`）
+  - 目標体重表示
+  - 「閉じる」ボタン
 
-- [ ] **紙吹雪アニメーション**
-  - confettiパッケージ統合
+- [x] **紙吹雪アニメーション** ✅
+  - confettiパッケージ統合済み
   - 5秒間の演出
-  - 自動終了後に達成画面表示
+  - スケールアニメーション付きカード表示
 
-- [ ] **プッシュ通知送信**
+- [x] **GoalCard達成時の特別表示** ✅
+  - ゴールド背景のグラデーション
+  - トロフィーアイコン表示
+  - 100%バッジ表示
+
+- [ ] **プッシュ通知送信**（将来実装）
   - Edge Function: `supabase/functions/notify-goal-achievement/index.ts`
   - FCM経由でクライアントへ通知
   - Web側（トレーナー）への通知
@@ -1163,7 +1190,7 @@
 
 ~~9. **Edge Functions作成** → タグ解析と記録作成の自動化~~ ✅ 完了
 ~~12. **画像添付機能** → image_picker + Supabase Storage~~ ✅ 完了
-10. **目標達成機能** → Database Function + 達成画面 + 演出
+~~10. **目標達成機能** → Database Function + 達成画面 + 演出~~ ✅ 完了
 11. **統計カード拡張** → 前回比、期間平均/最高/最低/変動幅
 13. **リプライ機能** → メッセージ長押しで返信、引用表示
 14. **メッセージ編集** → 5分以内の編集可能判定
@@ -1181,4 +1208,4 @@
 
 ---
 
-**最終更新**: 2026年1月4日 - 画像添付機能実装、Supabase Storage統合、iOSカメラ権限設定（v1.9）
+**最終更新**: 2026年1月11日 - UI日本語対応、達成率ロジック修正、ログイン画面レスポンシブ対応（v2.1）

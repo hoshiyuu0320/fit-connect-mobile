@@ -137,12 +137,25 @@ class HomeScreen extends ConsumerWidget {
 
         return latestWeightAsync.when(
           data: (latestWeight) {
-            final currentWeight = latestWeight?.weight ?? goal.initialWeight ?? 0.0;
+            final currentWeight =
+                latestWeight?.weight ?? goal.initialWeight ?? 0.0;
+            final targetWeight = goal.targetWeight ?? 0.0;
+            final initialWeight = goal.initialWeight ?? currentWeight;
+
+            // 達成判定: DBフラグ OR ローカル計算
+            // 減量目標: initialWeight > targetWeight → currentWeight <= targetWeight で達成
+            // 増量目標: initialWeight < targetWeight → currentWeight >= targetWeight で達成
+            final isAchievedLocally = initialWeight > targetWeight
+                ? currentWeight <= targetWeight
+                : currentWeight >= targetWeight;
+            final isAchieved = goal.goalAchievedAt != null || isAchievedLocally;
+
             return GoalCard(
               currentWeight: currentWeight,
-              targetWeight: goal.targetWeight ?? 0.0,
-              initialWeight: goal.initialWeight ?? currentWeight,
+              targetWeight: targetWeight,
+              initialWeight: initialWeight,
               targetDate: goal.goalDeadline,
+              isAchieved: isAchieved,
             );
           },
           loading: () => GoalCard(
@@ -151,12 +164,14 @@ class HomeScreen extends ConsumerWidget {
             initialWeight: goal.initialWeight ?? 0.0,
             targetDate: goal.goalDeadline,
             isLoading: true,
+            isAchieved: goal.goalAchievedAt != null,
           ),
           error: (_, __) => GoalCard(
             currentWeight: goal.initialWeight ?? 0.0,
             targetWeight: goal.targetWeight ?? 0.0,
             initialWeight: goal.initialWeight ?? 0.0,
             targetDate: goal.goalDeadline,
+            isAchieved: goal.goalAchievedAt != null,
           ),
         );
       },

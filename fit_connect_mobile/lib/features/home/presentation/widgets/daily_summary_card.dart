@@ -47,7 +47,7 @@ class DailySummaryCard extends ConsumerWidget {
         children: [
           // Header
           const Text(
-            'Daily Summary',
+            '今日のまとめ',
             style: TextStyle(
               fontSize: 16,
               fontWeight: FontWeight.bold,
@@ -140,7 +140,7 @@ class DailySummaryCard extends ConsumerWidget {
                     ),
                     const SizedBox(width: 10),
                     const Text(
-                      'Meals',
+                      '食事',
                       style: TextStyle(
                         fontWeight: FontWeight.bold,
                         color: AppColors.slate700,
@@ -222,7 +222,7 @@ class DailySummaryCard extends ConsumerWidget {
         ),
         const SizedBox(width: 10),
         const Text(
-          'Meals',
+          '食事',
           style: TextStyle(
             fontWeight: FontWeight.bold,
             color: AppColors.slate700,
@@ -262,7 +262,7 @@ class DailySummaryCard extends ConsumerWidget {
                 ),
                 const SizedBox(width: 10),
                 const Text(
-                  'Meals',
+                  '食事',
                   style: TextStyle(
                     fontWeight: FontWeight.bold,
                     color: AppColors.slate700,
@@ -347,7 +347,7 @@ class DailySummaryCard extends ConsumerWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    'Activity',
+                    '運動',
                     style: TextStyle(
                       fontWeight: FontWeight.bold,
                       color: AppColors.slate700,
@@ -356,7 +356,7 @@ class DailySummaryCard extends ConsumerWidget {
                     ),
                   ),
                   Text(
-                    'This week',
+                    '今週',
                     style: TextStyle(
                       color: AppColors.slate400,
                       fontSize: 10,
@@ -378,7 +378,7 @@ class DailySummaryCard extends ConsumerWidget {
                   ),
                 ),
                 const TextSpan(
-                  text: '/ 7 Days',
+                  text: '/ 7日',
                   style: TextStyle(
                     color: AppColors.slate400,
                     fontSize: 12,
@@ -406,7 +406,7 @@ class DailySummaryCard extends ConsumerWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                'Activity',
+                '運動',
                 style: TextStyle(
                   fontWeight: FontWeight.bold,
                   color: AppColors.slate700,
@@ -415,7 +415,7 @@ class DailySummaryCard extends ConsumerWidget {
                 ),
               ),
               Text(
-                'This week',
+                '今週',
                 style: TextStyle(
                   color: AppColors.slate400,
                   fontSize: 10,
@@ -456,7 +456,7 @@ class DailySummaryCard extends ConsumerWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Activity',
+                  '運動',
                   style: TextStyle(
                     fontWeight: FontWeight.bold,
                     color: AppColors.slate700,
@@ -465,7 +465,7 @@ class DailySummaryCard extends ConsumerWidget {
                   ),
                 ),
                 Text(
-                  'This week',
+                  '今週',
                   style: TextStyle(
                     color: AppColors.slate400,
                     fontSize: 10,
@@ -487,7 +487,7 @@ class DailySummaryCard extends ConsumerWidget {
                 ),
               ),
               const TextSpan(
-                text: '/ 7 Days',
+                text: '/ 7日',
                 style: TextStyle(
                   color: AppColors.slate400,
                   fontSize: 12,
@@ -531,7 +531,7 @@ class DailySummaryCard extends ConsumerWidget {
                 ),
                 const SizedBox(width: 10),
                 const Text(
-                  'Weight',
+                  '体重',
                   style: TextStyle(
                     fontWeight: FontWeight.bold,
                     color: AppColors.slate700,
@@ -562,7 +562,7 @@ class DailySummaryCard extends ConsumerWidget {
                       borderRadius: BorderRadius.circular(4),
                     ),
                     child: Text(
-                      '${change > 0 ? '+' : ''}${change.toStringAsFixed(1)}kg this week',
+                      '${change > 0 ? '+' : ''}${change.toStringAsFixed(1)}kg 今週',
                       style: TextStyle(
                         color: change < 0
                             ? AppColors.emerald500
@@ -591,7 +591,7 @@ class DailySummaryCard extends ConsumerWidget {
           ),
           const SizedBox(width: 10),
           const Text(
-            'Weight',
+            '体重',
             style: TextStyle(
               fontWeight: FontWeight.bold,
               color: AppColors.slate700,
@@ -628,7 +628,7 @@ class DailySummaryCard extends ConsumerWidget {
             ),
             const SizedBox(width: 10),
             const Text(
-              'Weight',
+              '体重',
               style: TextStyle(
                 fontWeight: FontWeight.bold,
                 color: AppColors.slate700,
@@ -638,7 +638,7 @@ class DailySummaryCard extends ConsumerWidget {
           ],
         ),
         const Text(
-          'No data yet',
+          'データなし',
           style: TextStyle(
             color: AppColors.slate400,
             fontSize: 12,
@@ -707,7 +707,7 @@ class _PreviewDailySummaryCard extends StatelessWidget {
         children: [
           // Header
           const Text(
-            'Daily Summary',
+            '今日のまとめ',
             style: TextStyle(
               fontSize: 16,
               fontWeight: FontWeight.bold,
@@ -755,7 +755,7 @@ class _PreviewDailySummaryCard extends StatelessWidget {
                 ),
                 const SizedBox(width: 10),
                 const Text(
-                  'Meals',
+                  '食事',
                   style: TextStyle(
                     fontWeight: FontWeight.bold,
                     color: AppColors.slate700,
@@ -839,7 +839,7 @@ class _PreviewDailySummaryCard extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Activity',
+                  '運動',
                   style: TextStyle(
                     fontWeight: FontWeight.bold,
                     color: AppColors.slate700,
@@ -848,7 +848,7 @@ class _PreviewDailySummaryCard extends StatelessWidget {
                   ),
                 ),
                 Text(
-                  'This week',
+                  '今週',
                   style: TextStyle(
                     color: AppColors.slate400,
                     fontSize: 10,
@@ -870,7 +870,7 @@ class _PreviewDailySummaryCard extends StatelessWidget {
                 ),
               ),
               const TextSpan(
-                text: '/ 7 Days',
+                text: '/ 7日',
                 style: TextStyle(
                   color: AppColors.slate400,
                   fontSize: 12,
@@ -901,7 +901,7 @@ class _PreviewDailySummaryCard extends StatelessWidget {
             ),
             const SizedBox(width: 10),
             const Text(
-              'Weight',
+              '体重',
               style: TextStyle(
                 fontWeight: FontWeight.bold,
                 color: AppColors.slate700,
@@ -985,7 +985,7 @@ class _PreviewDailySummaryCardEmpty extends StatelessWidget {
         children: [
           // Header
           const Text(
-            'Daily Summary',
+            '今日のまとめ',
             style: TextStyle(
               fontSize: 16,
               fontWeight: FontWeight.bold,
@@ -1026,7 +1026,7 @@ class _PreviewDailySummaryCardEmpty extends StatelessWidget {
                     ),
                     const SizedBox(width: 10),
                     const Text(
-                      'Weight',
+                      '体重',
                       style: TextStyle(
                         fontWeight: FontWeight.bold,
                         color: AppColors.slate700,
@@ -1036,7 +1036,7 @@ class _PreviewDailySummaryCardEmpty extends StatelessWidget {
                   ],
                 ),
                 const Text(
-                  'No data yet',
+                  'データなし',
                   style: TextStyle(
                     color: AppColors.slate400,
                     fontSize: 12,

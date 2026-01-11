@@ -96,8 +96,32 @@ class _WeightRecordScreenState extends ConsumerState<WeightRecordScreen> {
               final currentWeight = latestWeight?.weight ?? 0.0;
               final targetWeight = goal?.targetWeight ?? 0.0;
               final initialWeight = goal?.initialWeight ?? currentWeight;
-              final remaining = currentWeight - targetWeight;
               final vsStart = initialWeight - currentWeight;
+
+              // 減量 or 増量の判定
+              final isWeightLossGoal = initialWeight > targetWeight;
+
+              // 残り/超過の計算（減量・増量両対応）
+              final difference = (currentWeight - targetWeight).abs();
+              final bool isExceeded;
+              if (isWeightLossGoal) {
+                // 減量: current < target なら超過達成
+                isExceeded = currentWeight < targetWeight;
+              } else {
+                // 増量: current > target なら超過達成
+                isExceeded = currentWeight > targetWeight;
+              }
+              final bool isExactlyAchieved = currentWeight == targetWeight;
+
+              // ラベル決定: 残り / 達成 / 超過
+              final String statusLabel;
+              if (isExactlyAchieved) {
+                statusLabel = '達成';
+              } else if (isExceeded) {
+                statusLabel = '超過';
+              } else {
+                statusLabel = '残り';
+              }
 
               return Column(
                 children: [
@@ -105,21 +129,21 @@ class _WeightRecordScreenState extends ConsumerState<WeightRecordScreen> {
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       _buildTopStat(
-                        'Current',
+                        '現在',
                         currentWeight.toStringAsFixed(1),
                         'kg',
                       ),
                       Container(width: 1, height: 40, color: AppColors.slate100),
                       _buildTopStat(
-                        'Goal',
+                        '目標',
                         targetWeight.toStringAsFixed(1),
                         'kg',
                         isAccent: true,
                       ),
                       Container(width: 1, height: 40, color: AppColors.slate100),
                       _buildTopStat(
-                        'Left',
-                        '${remaining >= 0 ? "-" : "+"}${remaining.abs().toStringAsFixed(1)}',
+                        statusLabel,
+                        difference.toStringAsFixed(1),
                         'kg',
                       ),
                     ],
@@ -136,7 +160,7 @@ class _WeightRecordScreenState extends ConsumerState<WeightRecordScreen> {
                     children: [
                       Expanded(
                         child: _buildComparisonBox(
-                          'vs Start',
+                          '開始時比',
                           '${vsStart >= 0 ? "-" : "+"}${vsStart.abs().toStringAsFixed(1)}kg',
                           isPositive: vsStart >= 0,
                         ),
@@ -164,7 +188,7 @@ class _WeightRecordScreenState extends ConsumerState<WeightRecordScreen> {
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             const Text(
-              'Achievement',
+              '達成率',
               style: TextStyle(
                 color: AppColors.slate500,
                 fontSize: 12,
@@ -215,12 +239,12 @@ class _WeightRecordScreenState extends ConsumerState<WeightRecordScreen> {
                   Icon(LucideIcons.scale, size: 48, color: AppColors.slate300),
                   const SizedBox(height: 12),
                   const Text(
-                    'No weight records yet',
+                    '体重記録がありません',
                     style: TextStyle(color: AppColors.slate400),
                   ),
                   const SizedBox(height: 8),
                   const Text(
-                    'Start tracking your weight!',
+                    '体重を記録しましょう',
                     style: TextStyle(color: AppColors.slate300, fontSize: 12),
                   ),
                 ],
@@ -242,7 +266,7 @@ class _WeightRecordScreenState extends ConsumerState<WeightRecordScreen> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               const Text(
-                'Weight Trend',
+                '体重推移',
                 style: TextStyle(
                   fontWeight: FontWeight.bold,
                   fontSize: 16,
@@ -395,7 +419,7 @@ class _WeightRecordScreenState extends ConsumerState<WeightRecordScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             const Text(
-              'Recent Records',
+              '最近の記録',
               style: TextStyle(
                 fontWeight: FontWeight.bold,
                 fontSize: 16,
@@ -592,9 +616,31 @@ class _PreviewWeightRecordScreen extends StatelessWidget {
     final targetWeight = 65.0;
     final currentWeight = mockRecords.last.weight;
     final initialWeight = mockRecords.first.weight;
-    final remaining = currentWeight - targetWeight;
     final vsStart = initialWeight - currentWeight;
     final achievementRate = ((initialWeight - currentWeight) / (initialWeight - targetWeight) * 100).clamp(0, 100);
+
+    // 減量 or 増量の判定
+    final isWeightLossGoal = initialWeight > targetWeight;
+
+    // 残り/超過の計算（減量・増量両対応）
+    final difference = (currentWeight - targetWeight).abs();
+    final bool isExceeded;
+    if (isWeightLossGoal) {
+      isExceeded = currentWeight < targetWeight;
+    } else {
+      isExceeded = currentWeight > targetWeight;
+    }
+    final bool isExactlyAchieved = currentWeight == targetWeight;
+
+    // ラベル決定
+    final String statusLabel;
+    if (isExactlyAchieved) {
+      statusLabel = '達成';
+    } else if (isExceeded) {
+      statusLabel = '超過';
+    } else {
+      statusLabel = '残り';
+    }
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -637,13 +683,13 @@ class _PreviewWeightRecordScreen extends StatelessWidget {
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  _buildTopStat('Current', currentWeight.toStringAsFixed(1), 'kg'),
+                  _buildTopStat('現在', currentWeight.toStringAsFixed(1), 'kg'),
                   Container(width: 1, height: 40, color: AppColors.slate100),
-                  _buildTopStat('Goal', targetWeight.toStringAsFixed(1), 'kg', isAccent: true),
+                  _buildTopStat('目標', targetWeight.toStringAsFixed(1), 'kg', isAccent: true),
                   Container(width: 1, height: 40, color: AppColors.slate100),
                   _buildTopStat(
-                    'Left',
-                    '${remaining >= 0 ? "-" : "+"}${remaining.abs().toStringAsFixed(1)}',
+                    statusLabel,
+                    difference.toStringAsFixed(1),
                     'kg',
                   ),
                 ],
@@ -657,7 +703,7 @@ class _PreviewWeightRecordScreen extends StatelessWidget {
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       const Text(
-                        'Achievement',
+                        '達成率',
                         style: TextStyle(color: AppColors.slate500, fontSize: 12),
                       ),
                       Text(
@@ -687,7 +733,7 @@ class _PreviewWeightRecordScreen extends StatelessWidget {
                 children: [
                   Expanded(
                     child: _buildComparisonBox(
-                      'vs Start',
+                      '開始時比',
                       '${vsStart >= 0 ? "-" : "+"}${vsStart.abs().toStringAsFixed(1)}kg',
                       isPositive: vsStart >= 0,
                     ),
@@ -714,7 +760,7 @@ class _PreviewWeightRecordScreen extends StatelessWidget {
 
         // Records List
         const Text(
-          'Recent Records',
+          '最近の記録',
           style: TextStyle(
             fontWeight: FontWeight.bold,
             fontSize: 16,
@@ -792,7 +838,7 @@ class _PreviewWeightRecordScreen extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         const Text(
-          'Weight Trend',
+          '体重推移',
           style: TextStyle(
             fontWeight: FontWeight.bold,
             fontSize: 16,
