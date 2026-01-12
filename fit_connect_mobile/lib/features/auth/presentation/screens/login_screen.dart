@@ -4,7 +4,13 @@ import 'package:fit_connect_mobile/features/auth/data/auth_repository.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 
 class LoginScreen extends StatefulWidget {
-  const LoginScreen({super.key});
+  /// 登録フローから来た場合はtrue
+  final bool isRegistration;
+
+  const LoginScreen({
+    super.key,
+    this.isRegistration = false,
+  });
 
   @override
   State<LoginScreen> createState() => _LoginScreenState();
@@ -32,7 +38,7 @@ class _LoginScreenState extends State<LoginScreen> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('✨ Authentication link sent to your email!'),
+            content: Text('認証リンクをメールで送信しました'),
             backgroundColor: AppColors.success,
           ),
         );
@@ -41,7 +47,7 @@ class _LoginScreenState extends State<LoginScreen> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Error: ${e.toString()}'),
+            content: Text('エラー: ${e.toString()}'),
             backgroundColor: AppColors.rose800,
           ),
         );
@@ -59,6 +65,13 @@ class _LoginScreenState extends State<LoginScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.white,
+      appBar: widget.isRegistration
+          ? AppBar(
+              backgroundColor: Colors.white,
+              foregroundColor: AppColors.slate800,
+              elevation: 0,
+            )
+          : null,
       body: SafeArea(
         child: LayoutBuilder(
           builder: (context, constraints) {
@@ -66,7 +79,7 @@ class _LoginScreenState extends State<LoginScreen> {
               padding: const EdgeInsets.all(24.0),
               child: ConstrainedBox(
                 constraints: BoxConstraints(
-                  minHeight: constraints.maxHeight - 48, // padding分を引く
+                  minHeight: constraints.maxHeight - 48,
                 ),
                 child: IntrinsicHeight(
                   child: Column(
@@ -84,8 +97,10 @@ class _LoginScreenState extends State<LoginScreen> {
                             color: AppColors.primary50,
                             borderRadius: BorderRadius.circular(20),
                           ),
-                          child: const Icon(
-                            LucideIcons.activity,
+                          child: Icon(
+                            widget.isRegistration
+                                ? LucideIcons.mail
+                                : LucideIcons.activity,
                             size: 40,
                             color: AppColors.primary600,
                           ),
@@ -93,20 +108,22 @@ class _LoginScreenState extends State<LoginScreen> {
                       ),
                       const SizedBox(height: 24),
 
-                      const Text(
-                        'FIT-CONNECT',
+                      Text(
+                        widget.isRegistration ? 'メールアドレス認証' : 'FIT-CONNECT',
                         textAlign: TextAlign.center,
-                        style: TextStyle(
+                        style: const TextStyle(
                           fontSize: 28,
                           fontWeight: FontWeight.bold,
                           color: AppColors.slate800,
                         ),
                       ),
                       const SizedBox(height: 8),
-                      const Text(
-                        'Connect with your personal trainer\nand achieve your goals.',
+                      Text(
+                        widget.isRegistration
+                            ? 'アカウント登録のため\nメールアドレスを入力してください'
+                            : 'トレーナーとつながって\n目標を達成しよう',
                         textAlign: TextAlign.center,
-                        style: TextStyle(
+                        style: const TextStyle(
                           fontSize: 14,
                           color: AppColors.slate500,
                           height: 1.5,
@@ -125,10 +142,14 @@ class _LoginScreenState extends State<LoginScreen> {
                           ),
                           child: Column(
                             children: [
-                              const Icon(LucideIcons.mailCheck, size: 48, color: AppColors.success),
+                              const Icon(
+                                LucideIcons.mailCheck,
+                                size: 48,
+                                color: AppColors.success,
+                              ),
                               const SizedBox(height: 16),
                               const Text(
-                                'Check your email',
+                                'メールを確認してください',
                                 style: TextStyle(
                                   fontSize: 18,
                                   fontWeight: FontWeight.bold,
@@ -137,10 +158,19 @@ class _LoginScreenState extends State<LoginScreen> {
                               ),
                               const SizedBox(height: 8),
                               Text(
-                                'We sent a login link to:\n${_emailController.text}',
+                                '認証リンクを送信しました:\n${_emailController.text}',
                                 textAlign: TextAlign.center,
                                 style: const TextStyle(
                                   color: AppColors.slate600,
+                                ),
+                              ),
+                              const SizedBox(height: 16),
+                              const Text(
+                                'メール内のリンクをタップして\n認証を完了してください',
+                                textAlign: TextAlign.center,
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  color: AppColors.slate500,
                                 ),
                               ),
                             ],
@@ -149,7 +179,7 @@ class _LoginScreenState extends State<LoginScreen> {
                         const SizedBox(height: 24),
                         TextButton(
                           onPressed: () => setState(() => _isEmailSent = false),
-                          child: const Text('Try another email'),
+                          child: const Text('別のメールアドレスを使う'),
                         ),
                       ] else ...[
                         // Email Input
@@ -164,12 +194,19 @@ class _LoginScreenState extends State<LoginScreen> {
                             keyboardType: TextInputType.emailAddress,
                             style: const TextStyle(color: AppColors.slate800),
                             decoration: const InputDecoration(
-                              hintText: 'Enter your email',
+                              hintText: 'メールアドレスを入力',
                               hintStyle: TextStyle(color: AppColors.slate400),
                               border: InputBorder.none,
-                              prefixIcon: Icon(LucideIcons.mail, color: AppColors.slate400),
-                              contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                              prefixIcon: Icon(
+                                LucideIcons.mail,
+                                color: AppColors.slate400,
+                              ),
+                              contentPadding: EdgeInsets.symmetric(
+                                horizontal: 16,
+                                vertical: 16,
+                              ),
                             ),
+                            onSubmitted: (_) => _handleLogin(),
                           ),
                         ),
                         const SizedBox(height: 16),
@@ -190,11 +227,19 @@ class _LoginScreenState extends State<LoginScreen> {
                               ? const SizedBox(
                                   width: 20,
                                   height: 20,
-                                  child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
+                                  child: CircularProgressIndicator(
+                                    color: Colors.white,
+                                    strokeWidth: 2,
+                                  ),
                                 )
-                              : const Text(
-                                  'Send Magic Link',
-                                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                              : Text(
+                                  widget.isRegistration
+                                      ? '認証メールを送信'
+                                      : 'ログインリンクを送信',
+                                  style: const TextStyle(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.bold,
+                                  ),
                                 ),
                         ),
                       ],
@@ -202,10 +247,12 @@ class _LoginScreenState extends State<LoginScreen> {
                       const Spacer(),
 
                       // Footer
-                      const Text(
-                        'By continuing, you agree to our Terms & Privacy Policy.',
+                      Text(
+                        widget.isRegistration
+                            ? 'メールが届かない場合は\n迷惑メールフォルダをご確認ください'
+                            : '続行することで利用規約とプライバシーポリシーに同意したものとみなされます',
                         textAlign: TextAlign.center,
-                        style: TextStyle(
+                        style: const TextStyle(
                           fontSize: 10,
                           color: AppColors.slate400,
                         ),

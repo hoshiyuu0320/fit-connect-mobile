@@ -4,8 +4,10 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:fit_connect_mobile/core/theme/app_theme.dart';
 import 'package:fit_connect_mobile/core/theme/app_colors.dart';
 import 'package:fit_connect_mobile/features/home/presentation/screens/main_screen.dart';
-import 'package:fit_connect_mobile/features/auth/presentation/screens/login_screen.dart';
+import 'package:fit_connect_mobile/features/auth/presentation/screens/onboarding_screen.dart';
+import 'package:fit_connect_mobile/features/auth/presentation/screens/registration_complete_screen.dart';
 import 'package:fit_connect_mobile/features/auth/providers/current_user_provider.dart';
+import 'package:fit_connect_mobile/features/auth/providers/registration_provider.dart';
 
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
@@ -24,10 +26,11 @@ class MyApp extends StatelessWidget {
           }
           final session = snapshot.data?.session;
           if (session != null) {
-            // ログイン済み: データ取得を待つローディング画面を表示
+            // ログイン済み: クライアントデータの確認
             return const _AuthLoadingScreen();
           } else {
-            return const LoginScreen();
+            // 未ログイン: オンボーディング画面へ
+            return const OnboardingScreen();
           }
         },
       ),
@@ -59,11 +62,21 @@ class _AuthLoadingScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final clientAsync = ref.watch(currentClientProvider);
+    final registrationState = ref.watch(registrationNotifierProvider);
 
     return clientAsync.when(
       data: (client) {
-        // データ取得完了 → MainScreenへ
-        return const MainScreen();
+        if (client != null) {
+          // クライアントデータあり → MainScreenへ
+          return const MainScreen();
+        } else if (registrationState.hasTrainer) {
+          // クライアントデータなし＆登録フロー中 → 登録完了画面へ
+          return const RegistrationCompleteScreen();
+        } else {
+          // クライアントデータなし＆登録フローなし → オンボーディングへ
+          // （認証済みだがクライアント登録がない状態）
+          return const OnboardingScreen();
+        }
       },
       loading: () {
         // ローディング中
@@ -78,7 +91,7 @@ class _AuthLoadingScreen extends ConsumerWidget {
                 ),
                 const SizedBox(height: 16),
                 Text(
-                  'Loading...',
+                  '読み込み中...',
                   style: TextStyle(
                     color: AppColors.slate500,
                     fontSize: 14,
@@ -90,8 +103,11 @@ class _AuthLoadingScreen extends ConsumerWidget {
         );
       },
       error: (error, stack) {
-        // エラー時もMainScreenへ（エラーハンドリングはMainScreen側で行う）
-        return const MainScreen();
+        // エラー時: 登録フロー中なら完了画面、そうでなければオンボーディング
+        if (registrationState.hasTrainer) {
+          return const RegistrationCompleteScreen();
+        }
+        return const OnboardingScreen();
       },
     );
   }
