@@ -1,7 +1,9 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:fit_connect_mobile/core/theme/app_colors.dart';
 import 'package:fit_connect_mobile/features/auth/data/auth_repository.dart';
 import 'package:lucide_icons/lucide_icons.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 class LoginScreen extends StatefulWidget {
   /// 登録フローから来た場合はtrue
@@ -21,6 +23,28 @@ class _LoginScreenState extends State<LoginScreen> {
   bool _isLoading = false;
   bool _isEmailSent = false;
   final _authRepository = AuthRepository();
+
+  // 認証状態監視用
+  StreamSubscription<AuthState>? _authSubscription;
+
+  @override
+  void initState() {
+    super.initState();
+    // 認証状態を監視
+    _authSubscription = Supabase.instance.client.auth.onAuthStateChange.listen((data) {
+      if (data.session != null && mounted) {
+        // 認証成功 → スタックをクリアしてルートに戻る
+        Navigator.of(context).popUntil((route) => route.isFirst);
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _authSubscription?.cancel();
+    _emailController.dispose();
+    super.dispose();
+  }
 
   Future<void> _handleLogin() async {
     final email = _emailController.text.trim();

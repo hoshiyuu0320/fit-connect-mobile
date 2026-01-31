@@ -11,6 +11,14 @@ class OnboardingScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.white,
+      appBar: AppBar(
+        backgroundColor: Colors.white,
+        elevation: 0,
+        leading: IconButton(
+          icon: const Icon(LucideIcons.arrowLeft, color: AppColors.slate800),
+          onPressed: () => Navigator.of(context).pop(),
+        ),
+      ),
       body: SafeArea(
         child: LayoutBuilder(
           builder: (context, constraints) {
@@ -37,7 +45,7 @@ class OnboardingScreen extends StatelessWidget {
                             borderRadius: BorderRadius.circular(24),
                           ),
                           child: const Icon(
-                            LucideIcons.activity,
+                            LucideIcons.userPlus,
                             size: 50,
                             color: AppColors.primary600,
                           ),
@@ -47,7 +55,7 @@ class OnboardingScreen extends StatelessWidget {
 
                       // Title
                       const Text(
-                        'FIT-CONNECT',
+                        'アカウント登録',
                         textAlign: TextAlign.center,
                         style: TextStyle(
                           fontSize: 32,
@@ -60,7 +68,7 @@ class OnboardingScreen extends StatelessWidget {
 
                       // Subtitle
                       const Text(
-                        'トレーナーとつながって\n目標を達成しよう',
+                        'トレーナーからQRコードまたは\n招待コードを受け取ってください',
                         textAlign: TextAlign.center,
                         style: TextStyle(
                           fontSize: 16,
@@ -70,27 +78,6 @@ class OnboardingScreen extends StatelessWidget {
                       ),
 
                       const SizedBox(height: 64),
-
-                      // Features
-                      _buildFeatureItem(
-                        icon: LucideIcons.messageSquare,
-                        title: 'メッセージで記録',
-                        description: '体重・食事・運動をかんたんに報告',
-                      ),
-                      const SizedBox(height: 16),
-                      _buildFeatureItem(
-                        icon: LucideIcons.target,
-                        title: '目標を管理',
-                        description: 'トレーナーと一緒に目標達成を目指す',
-                      ),
-                      const SizedBox(height: 16),
-                      _buildFeatureItem(
-                        icon: LucideIcons.barChart2,
-                        title: '進捗を可視化',
-                        description: 'グラフとカレンダーで成果を確認',
-                      ),
-
-                      const SizedBox(height: 48),
 
                       // QR Scan Button
                       ElevatedButton.icon(
@@ -140,16 +127,6 @@ class OnboardingScreen extends StatelessWidget {
                       ),
 
                       const Spacer(),
-
-                      // Footer
-                      const Text(
-                        'トレーナーからQRコードまたは\n招待コードを受け取ってください',
-                        textAlign: TextAlign.center,
-                        style: TextStyle(
-                          fontSize: 12,
-                          color: AppColors.slate400,
-                        ),
-                      ),
                     ],
                   ),
                 ),
@@ -157,62 +134,6 @@ class OnboardingScreen extends StatelessWidget {
             );
           },
         ),
-      ),
-    );
-  }
-
-  Widget _buildFeatureItem({
-    required IconData icon,
-    required String title,
-    required String description,
-  }) {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: AppColors.slate50,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: AppColors.slate100),
-      ),
-      child: Row(
-        children: [
-          Container(
-            width: 44,
-            height: 44,
-            decoration: BoxDecoration(
-              color: AppColors.primary100,
-              borderRadius: BorderRadius.circular(10),
-            ),
-            child: Icon(
-              icon,
-              color: AppColors.primary600,
-              size: 22,
-            ),
-          ),
-          const SizedBox(width: 16),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  title,
-                  style: const TextStyle(
-                    fontWeight: FontWeight.bold,
-                    color: AppColors.slate800,
-                    fontSize: 14,
-                  ),
-                ),
-                const SizedBox(height: 2),
-                Text(
-                  description,
-                  style: const TextStyle(
-                    color: AppColors.slate500,
-                    fontSize: 12,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
       ),
     );
   }

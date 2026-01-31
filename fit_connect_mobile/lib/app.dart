@@ -4,7 +4,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:fit_connect_mobile/core/theme/app_theme.dart';
 import 'package:fit_connect_mobile/core/theme/app_colors.dart';
 import 'package:fit_connect_mobile/features/home/presentation/screens/main_screen.dart';
-import 'package:fit_connect_mobile/features/auth/presentation/screens/onboarding_screen.dart';
+import 'package:fit_connect_mobile/features/auth/presentation/screens/welcome_screen.dart';
 import 'package:fit_connect_mobile/features/auth/presentation/screens/registration_complete_screen.dart';
 import 'package:fit_connect_mobile/features/auth/providers/current_user_provider.dart';
 import 'package:fit_connect_mobile/features/auth/providers/registration_provider.dart';
@@ -30,7 +30,7 @@ class MyApp extends StatelessWidget {
             return const _AuthLoadingScreen();
           } else {
             // 未ログイン: オンボーディング画面へ
-            return const OnboardingScreen();
+            return const WelcomeScreen();
           }
         },
       ),
@@ -75,7 +75,7 @@ class _AuthLoadingScreen extends ConsumerWidget {
         } else {
           // クライアントデータなし＆登録フローなし → オンボーディングへ
           // （認証済みだがクライアント登録がない状態）
-          return const OnboardingScreen();
+          return const WelcomeScreen();
         }
       },
       loading: () {
@@ -107,7 +107,7 @@ class _AuthLoadingScreen extends ConsumerWidget {
         if (registrationState.hasTrainer) {
           return const RegistrationCompleteScreen();
         }
-        return const OnboardingScreen();
+        return const WelcomeScreen();
       },
     );
   }
