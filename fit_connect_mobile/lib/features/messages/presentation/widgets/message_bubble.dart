@@ -16,6 +16,8 @@ class MessageBubble extends StatelessWidget {
   final String? replyToContent;
   final String? replyToSenderName;
   final VoidCallback? onReply;
+  final VoidCallback? onEdit;
+  final bool isEdited;
 
   const MessageBubble({
     super.key,
@@ -29,6 +31,8 @@ class MessageBubble extends StatelessWidget {
     this.replyToContent,
     this.replyToSenderName,
     this.onReply,
+    this.onEdit,
+    this.isEdited = false,
   });
 
   /// メッセージからタグ部分を除去した本文を取得
@@ -40,7 +44,7 @@ class MessageBubble extends StatelessWidget {
 
   /// 長押しメニューを表示
   void _showContextMenu(BuildContext context) {
-    if (onReply == null) return;
+    if (onReply == null && onEdit == null) return;
 
     showModalBottomSheet(
       context: context,
@@ -55,14 +59,24 @@ class MessageBubble extends StatelessWidget {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              ListTile(
-                leading: Icon(LucideIcons.reply, color: AppColors.primary600),
-                title: const Text('返信'),
-                onTap: () {
-                  Navigator.pop(context);
-                  onReply!();
-                },
-              ),
+              if (onReply != null)
+                ListTile(
+                  leading: Icon(LucideIcons.reply, color: AppColors.primary600),
+                  title: const Text('返信'),
+                  onTap: () {
+                    Navigator.pop(context);
+                    onReply!();
+                  },
+                ),
+              if (isUser && onEdit != null)
+                ListTile(
+                  leading: Icon(LucideIcons.pencil, color: AppColors.primary600),
+                  title: const Text('編集'),
+                  onTap: () {
+                    Navigator.pop(context);
+                    onEdit!();
+                  },
+                ),
             ],
           ),
         ),
@@ -97,7 +111,7 @@ class MessageBubble extends StatelessWidget {
     final displayMessage = _messageWithoutTags;
 
     return GestureDetector(
-      onLongPress: onReply != null ? () => _showContextMenu(context) : null,
+      onLongPress: (onReply != null || onEdit != null) ? () => _showContextMenu(context) : null,
       child: Padding(
         padding: const EdgeInsets.symmetric(vertical: 4.0),
         child: Row(
@@ -204,12 +218,33 @@ class MessageBubble extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(height: 4),
-                  Text(
-                    timestamp,
-                    style: const TextStyle(
-                      color: AppColors.slate400,
-                      fontSize: 10,
-                    ),
+                  Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      if (isEdited) ...[
+                        const Text(
+                          '編集済み',
+                          style: TextStyle(
+                            color: AppColors.slate400,
+                            fontSize: 10,
+                          ),
+                        ),
+                        const Text(
+                          ' ・ ',
+                          style: TextStyle(
+                            color: AppColors.slate400,
+                            fontSize: 10,
+                          ),
+                        ),
+                      ],
+                      Text(
+                        timestamp,
+                        style: const TextStyle(
+                          color: AppColors.slate400,
+                          fontSize: 10,
+                        ),
+                      ),
+                    ],
                   ),
                 ],
               ),
@@ -287,6 +322,7 @@ Widget previewMessageBubbleUser() {
             isUser: true,
             timestamp: '12:34',
             onReply: () {},
+            onEdit: () {},
           ),
         ),
       ),
@@ -413,6 +449,94 @@ Widget previewMessageBubbleWithImages() {
               'https://picsum.photos/seed/lunch2/300/300',
             ],
             onReply: () {},
+            onEdit: () {},
+          ),
+        ),
+      ),
+    ),
+  );
+}
+
+@Preview(name: 'MessageBubble - Edited Message')
+Widget previewMessageBubbleEdited() {
+  return MaterialApp(
+    theme: AppTheme.lightTheme,
+    home: Scaffold(
+      backgroundColor: AppColors.slate50,
+      body: SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            children: [
+              MessageBubble(
+                message: '訂正：今日は10km走りました！',
+                isUser: true,
+                timestamp: '14:30',
+                isEdited: true,
+                onReply: () {},
+                onEdit: () {},
+              ),
+              const SizedBox(height: 16),
+              MessageBubble(
+                message: '素晴らしいですね！次回は15kmに挑戦してみましょう',
+                isUser: false,
+                timestamp: '14:32',
+                isEdited: true,
+                onReply: () {},
+              ),
+            ],
+          ),
+        ),
+      ),
+    ),
+  );
+}
+
+@Preview(name: 'MessageBubble - Edit Menu Demo')
+Widget previewMessageBubbleEditMenu() {
+  return MaterialApp(
+    theme: AppTheme.lightTheme,
+    home: Scaffold(
+      backgroundColor: AppColors.slate50,
+      body: SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              const Text(
+                '長押しでメニュー表示（自分のメッセージ）',
+                style: TextStyle(
+                  color: AppColors.slate600,
+                  fontSize: 12,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              const SizedBox(height: 8),
+              MessageBubble(
+                message: 'このメッセージを長押ししてください',
+                isUser: true,
+                timestamp: '12:34',
+                onReply: () {},
+                onEdit: () {},
+              ),
+              const SizedBox(height: 16),
+              const Text(
+                '長押しでメニュー表示（相手のメッセージ - 編集不可）',
+                style: TextStyle(
+                  color: AppColors.slate600,
+                  fontSize: 12,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              const SizedBox(height: 8),
+              MessageBubble(
+                message: '返信のみ可能です',
+                isUser: false,
+                timestamp: '12:35',
+                onReply: () {},
+              ),
+            ],
           ),
         ),
       ),

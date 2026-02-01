@@ -1,9 +1,9 @@
 # FIT-CONNECT Mobile - 実装タスク一覧
 
 **作成日**: 2025年12月30日
-**バージョン**: 2.4
-**進捗状況**: 全体 98% 完了
-**最終更新**: 2026年2月1日 - ログアウト機能実装完了、設定画面追加
+**バージョン**: 2.5
+**進捗状況**: 全体 99% 完了
+**最終更新**: 2026年2月1日 - メッセージ編集機能実装完了
 
 ---
 
@@ -149,12 +149,68 @@
   - ✅ MainScreenに設定タブ追加
   - ✅ ログアウト確認ダイアログ
   - ✅ UIプレビュー関数追加
+- ✅ **メッセージ編集機能実装（2026/02/01）**
+  - ✅ MessageBubbleに編集メニュー・編集済みバッジ追加
+  - ✅ ChatInputに編集モード追加（EditPreview Widget）
+  - ✅ MessageScreenで編集機能統合
+  - ✅ 5分以内編集可能、期限切れエラー表示
+  - ✅ UIプレビュー関数追加
 
 ---
 
 ## 最新の変更履歴
 
 ### 2026年2月1日
+
+#### 5. メッセージ編集機能実装
+
+**目的**: 送信後5分以内のメッセージを編集できるようにする
+
+**改修ファイル**:
+- `lib/features/messages/presentation/widgets/message_bubble.dart`
+- `lib/features/messages/presentation/widgets/chat_input.dart`
+- `lib/features/messages/presentation/screens/message_screen.dart`
+
+**実装内容**:
+
+1. **MessageBubble改修**
+   - `onEdit` コールバック追加
+   - `isEdited` プロパティ追加
+   - 長押しメニューに「編集」オプション追加（自分のメッセージのみ）
+   - 「編集済み ・ HH:mm」形式でタイムスタンプ表示
+   - プレビュー関数追加（3種類）
+
+2. **ChatInput改修**
+   - `editingMessageId`, `editingMessageContent`, `onCancelEdit` プロパティ追加
+   - `EditPreview` Widget追加（アンバー系カラーで返信と区別）
+   - 編集モード時のテキスト初期値設定
+   - 送信ボタンアイコン切り替え（send → check）
+   - プレビュー関数追加（5種類）
+
+3. **MessageScreen改修**
+   - 編集状態管理（`_editingMessageId`, `_editingMessageContent`）
+   - `_setEditTarget()`, `_clearEditTarget()` 関数追加
+   - `_editMessage()` 関数追加（MessageRepository.editMessage呼び出し）
+   - 返信と編集の排他制御
+   - 編集期限切れ時のエラーSnackBar表示
+
+**動作フロー**:
+```
+メッセージ長押し → 「編集」タップ
+  ↓
+ChatInputにEditPreview表示、テキスト初期値セット
+  ↓
+編集してチェックマークタップ
+  ↓
+can_edit_message() で5分以内か判定
+  ↓
+OK: messages UPDATE、edited_at/is_edited更新
+NG: 「編集可能な時間（5分）を過ぎました」エラー表示
+  ↓
+MessageBubbleに「編集済み」バッジ表示
+```
+
+---
 
 #### 4. ログアウト機能実装
 
@@ -392,13 +448,14 @@ class Trainer {
   - [x] リプライ表示UI（ReplyQuote Widget - バブル内引用）
   - [x] MessageBubbleプレビュー関数追加（6種類）
 
-- [ ] **2.5 メッセージ編集**
-  - [ ] 5分以内の編集可能判定（Database Function: `can_edit_message` - 既存）
-  - [ ] 編集UI（メッセージ長押し → 編集メニュー追加）
-  - [ ] 編集入力モード（ChatInputの拡張）
-  - [ ] `edited_at` タイムスタンプ記録
-  - [ ] 「編集済み」バッジ表示（MessageBubble）
-  - [ ] タグ変更時の記録更新ロジック
+- [x] **2.5 メッセージ編集** ✅ 完了（2026/02/01）
+  - [x] 5分以内の編集可能判定（Database Function: `can_edit_message` - 既存）
+  - [x] 編集UI（メッセージ長押し → 編集メニュー追加）
+  - [x] 編集入力モード（ChatInput EditPreview追加）
+  - [x] `edited_at` タイムスタンプ記録（MessageRepository.editMessage）
+  - [x] 「編集済み」バッジ表示（MessageBubble）
+  - [x] プレビュー関数追加（MessageBubble、ChatInput）
+  - [ ] タグ変更時の記録更新ロジック（将来実装）
 
 - [ ] **2.6 既読機能（将来実装）**
   - [ ] `read_at` タイムスタンプ更新
@@ -490,17 +547,16 @@ class Trainer {
 
 | # | タスク | 詳細 | 見積もり |
 |---|--------|------|----------|
-| 1 | **メッセージ編集** | 5分以内編集、編集UI、edited_at記録、「編集済み」バッジ | 中 |
-| 2 | **統計カード拡張** | 前回比、期間平均/最高/最低/変動幅（体重記録画面） | 小 |
+| 1 | **統計カード拡張** | 前回比、期間平均/最高/最低/変動幅（体重記録画面） | 小 |
 
 ### 🟡 高優先（MVP後すぐ）
 
 | # | タスク | 詳細 | 見積もり |
 |---|--------|------|----------|
-| 4 | **プッシュ通知** | Firebase設定、NotificationService有効化、通知ハンドリング | 大 |
-| 5 | **既読機能** | read_at更新、既読表示UI（✓マーク） | 中 |
-| 6 | **ページネーション** | 大量メッセージ対応、無限スクロール | 中 |
-| 7 | **画像ギャラリー** | 食事画像のグリッド表示、フルスクリーン表示 | 中 |
+| 2 | **プッシュ通知** | Firebase設定、NotificationService有効化、通知ハンドリング | 大 |
+| 3 | **既読機能** | read_at更新、既読表示UI（✓マーク） | 中 |
+| 4 | **ページネーション** | 大量メッセージ対応、無限スクロール | 中 |
+| 5 | **画像ギャラリー** | 食事画像のグリッド表示、フルスクリーン表示 | 中 |
 
 ### 🟢 中優先（アップデート）
 
@@ -606,4 +662,4 @@ supabase/
 
 ---
 
-**最終更新**: 2026年2月1日 - ログアウト機能実装完了、設定画面追加（v2.4）
+**最終更新**: 2026年2月1日 - メッセージ編集機能実装完了（v2.5）

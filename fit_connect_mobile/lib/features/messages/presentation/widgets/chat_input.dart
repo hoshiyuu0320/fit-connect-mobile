@@ -1,6 +1,8 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:flutter/widget_previews.dart';
 import 'package:fit_connect_mobile/core/theme/app_colors.dart';
+import 'package:fit_connect_mobile/core/theme/app_theme.dart';
 import 'package:fit_connect_mobile/features/messages/presentation/widgets/tag_suggestion_list.dart';
 import 'package:fit_connect_mobile/features/messages/presentation/widgets/reply_preview.dart';
 import 'package:fit_connect_mobile/services/storage_service.dart';
@@ -12,6 +14,9 @@ class ChatInput extends StatefulWidget {
   final String? replyToMessageId;
   final String? replyToContent;
   final VoidCallback? onCancelReply;
+  final String? editingMessageId;
+  final String? editingMessageContent;
+  final VoidCallback? onCancelEdit;
 
   const ChatInput({
     super.key,
@@ -20,6 +25,9 @@ class ChatInput extends StatefulWidget {
     this.replyToMessageId,
     this.replyToContent,
     this.onCancelReply,
+    this.editingMessageId,
+    this.editingMessageContent,
+    this.onCancelEdit,
   });
 
   @override
@@ -39,6 +47,35 @@ class _ChatInputState extends State<ChatInput> {
   void initState() {
     super.initState();
     _controller.addListener(_onTextChanged);
+    // 初期化時に編集モードの場合はテキストをセット
+    if (widget.editingMessageContent != null) {
+      _controller.text = widget.editingMessageContent!;
+      // 次フレームでカーソルを末尾に移動
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        _controller.selection = TextSelection.fromPosition(
+          TextPosition(offset: _controller.text.length),
+        );
+      });
+    }
+  }
+
+  @override
+  void didUpdateWidget(ChatInput oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    // 編集モードに入った場合（null → 値に変化）
+    if (oldWidget.editingMessageId == null && widget.editingMessageId != null) {
+      _controller.text = widget.editingMessageContent ?? '';
+      // カーソルを末尾に移動
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        _controller.selection = TextSelection.fromPosition(
+          TextPosition(offset: _controller.text.length),
+        );
+      });
+    }
+    // 編集モードが解除された場合（値 → nullに変化）
+    if (oldWidget.editingMessageId != null && widget.editingMessageId == null) {
+      _controller.clear();
+    }
   }
 
   @override
@@ -293,10 +330,21 @@ class _ChatInputState extends State<ChatInput> {
 
   @override
   Widget build(BuildContext context) {
+    // 編集モードと返信モードの排他制御
+    final isEditMode = widget.editingMessageId != null;
+    final isReplyMode = widget.replyToContent != null && !isEditMode;
+
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
-        if (widget.replyToContent != null)
+        // 編集プレビュー（編集モード時のみ表示）
+        if (isEditMode)
+          _EditPreview(
+            messageContent: widget.editingMessageContent ?? '',
+            onCancel: widget.onCancelEdit ?? () {},
+          ),
+        // 返信プレビュー（返信モード時のみ表示）
+        if (isReplyMode)
           ReplyPreview(
             messageContent: widget.replyToContent!,
             onCancel: widget.onCancelReply ?? () {},
@@ -482,8 +530,11 @@ class _ChatInputState extends State<ChatInput> {
                               color: Colors.white,
                             ),
                           )
-                        : const Icon(LucideIcons.send,
-                            color: Colors.white, size: 20),
+                        : Icon(
+                            isEditMode ? LucideIcons.check : LucideIcons.send,
+                            color: Colors.white,
+                            size: 20,
+                          ),
                   ),
                 ),
               ],
@@ -493,4 +544,177 @@ class _ChatInputState extends State<ChatInput> {
       ],
     );
   }
+}
+
+// ============================================
+// EditPreview Widget
+// ============================================
+
+class _EditPreview extends StatelessWidget {
+  final String messageContent;
+  final VoidCallback onCancel;
+
+  const _EditPreview({
+    required this.messageContent,
+    required this.onCancel,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      decoration: const BoxDecoration(
+        color: AppColors.amber100,
+        border: Border(
+          top: BorderSide(color: AppColors.amber300),
+          bottom: BorderSide(color: AppColors.amber300),
+        ),
+      ),
+      child: Row(
+        children: [
+          const Icon(LucideIcons.pencil, size: 16, color: AppColors.amber800),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Text(
+                  '編集中',
+                  style: TextStyle(
+                    color: AppColors.amber800,
+                    fontSize: 10,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                Text(
+                  messageContent,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    color: AppColors.amber800,
+                    fontSize: 12,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          IconButton(
+            icon: const Icon(LucideIcons.x, size: 16, color: AppColors.amber700),
+            onPressed: onCancel,
+            padding: EdgeInsets.zero,
+            constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// ============================================
+// Previews
+// ============================================
+
+@Preview(name: 'ChatInput - Normal Mode')
+Widget previewChatInputNormal() {
+  return MaterialApp(
+    theme: AppTheme.lightTheme,
+    home: Scaffold(
+      body: SafeArea(
+        child: Column(
+          children: [
+            const Spacer(),
+            ChatInput(
+              onSend: (text, images, replyTo) async {},
+              userId: 'user-123',
+            ),
+          ],
+        ),
+      ),
+    ),
+  );
+}
+
+@Preview(name: 'ChatInput - Reply Mode')
+Widget previewChatInputReply() {
+  return MaterialApp(
+    theme: AppTheme.lightTheme,
+    home: Scaffold(
+      body: SafeArea(
+        child: Column(
+          children: [
+            const Spacer(),
+            ChatInput(
+              onSend: (text, images, replyTo) async {},
+              userId: 'user-123',
+              replyToMessageId: 'msg-123',
+              replyToContent: '昨日のトレーニングはどうでしたか?',
+              onCancelReply: () {},
+            ),
+          ],
+        ),
+      ),
+    ),
+  );
+}
+
+@Preview(name: 'ChatInput - Edit Mode')
+Widget previewChatInputEdit() {
+  return MaterialApp(
+    theme: AppTheme.lightTheme,
+    home: Scaffold(
+      body: SafeArea(
+        child: Column(
+          children: [
+            const Spacer(),
+            ChatInput(
+              onSend: (text, images, replyTo) async {},
+              userId: 'user-123',
+              editingMessageId: 'msg-456',
+              editingMessageContent: '今日のトレーニングは30分のランニングと腹筋100回をやりました！',
+              onCancelEdit: () {},
+            ),
+          ],
+        ),
+      ),
+    ),
+  );
+}
+
+@Preview(name: 'EditPreview - Short Message')
+Widget previewEditPreviewShort() {
+  return MaterialApp(
+    theme: AppTheme.lightTheme,
+    home: Scaffold(
+      body: SafeArea(
+        child: Column(
+          children: [
+            _EditPreview(
+              messageContent: 'こんにちは！',
+              onCancel: () {},
+            ),
+          ],
+        ),
+      ),
+    ),
+  );
+}
+
+@Preview(name: 'EditPreview - Long Message')
+Widget previewEditPreviewLong() {
+  return MaterialApp(
+    theme: AppTheme.lightTheme,
+    home: Scaffold(
+      body: SafeArea(
+        child: Column(
+          children: [
+            _EditPreview(
+              messageContent: 'これは非常に長いメッセージで、1行に収まりきらないため省略されるはずです。テストメッセージです。',
+              onCancel: () {},
+            ),
+          ],
+        ),
+      ),
+    ),
+  );
 }
