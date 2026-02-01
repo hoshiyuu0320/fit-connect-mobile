@@ -23,6 +23,8 @@ class _MessageScreenState extends ConsumerState<MessageScreen> {
   final ScrollController _scrollController = ScrollController();
   String? _replyToMessageId;
   String? _replyToContent;
+  String? _editingMessageId;
+  String? _editingMessageContent;
 
   @override
   void dispose() {
@@ -31,6 +33,8 @@ class _MessageScreenState extends ConsumerState<MessageScreen> {
   }
 
   void _setReplyTarget(Message message) {
+    // 編集モードをクリア
+    _clearEditTarget();
     setState(() {
       _replyToMessageId = message.id;
       _replyToContent = message.content ?? '';
@@ -44,9 +48,65 @@ class _MessageScreenState extends ConsumerState<MessageScreen> {
     });
   }
 
-  Future<void> _sendMessage(String text, List<String>? imageUrls, String? replyToId) async {
+  void _setEditTarget(Message message) {
+    // 返信モードをクリア
+    _clearReplyTarget();
+    setState(() {
+      _editingMessageId = message.id;
+      _editingMessageContent = message.content ?? '';
+    });
+  }
+
+  void _clearEditTarget() {
+    setState(() {
+      _editingMessageId = null;
+      _editingMessageContent = null;
+    });
+  }
+
+  Future<void> _editMessage(String newContent) async {
+    if (_editingMessageId == null) return;
+
+    try {
+      final success = await ref.read(messagesNotifierProvider.notifier).editMessage(
+            messageId: _editingMessageId!,
+            newContent: newContent,
+          );
+
+      if (!success) {
+        // 編集期限切れ
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('編集可能な時間（5分）を過ぎました'),
+              backgroundColor: AppColors.rose800,
+            ),
+          );
+        }
+      }
+      _clearEditTarget();
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('メッセージの編集に失敗しました: $e'),
+            backgroundColor: AppColors.rose800,
+          ),
+        );
+      }
+    }
+  }
+
+  Future<void> _handleSend(String text, List<String>? imageUrls, String? replyToId) async {
     if (text.trim().isEmpty && (imageUrls == null || imageUrls.isEmpty)) return;
 
+    // 編集モードの場合
+    if (_editingMessageId != null) {
+      await _editMessage(text);
+      return;
+    }
+
+    // 通常送信モード
     // Parse tags from message
     List<String>? tags;
     if (text.contains('#食事') || text.contains('#meal')) {
@@ -142,11 +202,14 @@ class _MessageScreenState extends ConsumerState<MessageScreen> {
               ),
             ),
             ChatInput(
-              onSend: _sendMessage,
+              onSend: _handleSend,
               userId: currentUser?.id,
               replyToMessageId: _replyToMessageId,
               replyToContent: _replyToContent,
               onCancelReply: _clearReplyTarget,
+              editingMessageId: _editingMessageId,
+              editingMessageContent: _editingMessageContent,
+              onCancelEdit: _clearEditTarget,
             ),
           ],
         ),
@@ -312,7 +375,9 @@ class _MessageScreenState extends ConsumerState<MessageScreen> {
                     ? (replyMessage.senderId == currentUserId ? '自分' : trainerName)
                     : null,
                 isSystem: false,
+                isEdited: message.isEdited,
                 onReply: () => _setReplyTarget(message),
+                onEdit: isUser ? () => _setEditTarget(message) : null,
               );
             }),
           ],
@@ -519,6 +584,7 @@ class _PreviewMessageScreen extends StatelessWidget {
                     tags: msg.tags,
                     images: msg.images,
                     isSystem: false,
+                    isEdited: msg.isEdited ?? false,
                   )),
             ],
           ),
@@ -572,6 +638,7 @@ class _MockMessage {
   final String timestamp;
   final List<String>? tags;
   final List<String>? images;
+  final bool? isEdited;
 
   _MockMessage({
     required this.content,
@@ -579,5 +646,6 @@ class _MockMessage {
     required this.timestamp,
     this.tags,
     this.images,
+    this.isEdited,
   });
 }
