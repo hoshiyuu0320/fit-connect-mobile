@@ -1,9 +1,9 @@
 # FIT-CONNECT Mobile - 実装タスク一覧
 
 **作成日**: 2025年12月30日
-**バージョン**: 2.3
-**進捗状況**: 全体 97% 完了
-**最終更新**: 2026年2月1日 - リプライ機能実装完了、DBスキーマ変更（profiles→trainers）
+**バージョン**: 2.4
+**進捗状況**: 全体 98% 完了
+**最終更新**: 2026年2月1日 - ログアウト機能実装完了、設定画面追加
 
 ---
 
@@ -144,12 +144,54 @@
   - ✅ ChatInput・MessageScreen統合
   - ✅ 送信時のreplyToMessageId保存
   - ✅ UIプレビュー関数追加
+- ✅ **ログアウト機能実装（2026/02/01）**
+  - ✅ SettingsScreen新規作成（ユーザー情報表示、ログアウトボタン）
+  - ✅ MainScreenに設定タブ追加
+  - ✅ ログアウト確認ダイアログ
+  - ✅ UIプレビュー関数追加
 
 ---
 
 ## 最新の変更履歴
 
 ### 2026年2月1日
+
+#### 4. ログアウト機能実装
+
+**目的**: ユーザーがログアウトできるようにする
+
+**新規作成ファイル**:
+- `lib/features/settings/presentation/screens/settings_screen.dart`
+
+**改修ファイル**:
+- `lib/features/home/presentation/screens/main_screen.dart`
+
+**実装内容**:
+1. **SettingsScreen**
+   - ユーザー情報表示（名前、メール、担当トレーナー）
+   - プロフィール画像表示（存在する場合）
+   - ログアウトボタン（赤色、警告色）
+   - 確認ダイアログ（タイトル: "ログアウト"、メッセージ: "ログアウトしますか？"）
+   - `ref.read(authNotifierProvider.notifier).signOut()` 呼び出し
+   - エラーハンドリング（失敗時はSnackBar表示）
+   - プレビュー関数（`@Preview`アノテーション）
+
+2. **MainScreen更新**
+   - BottomNavigationBarに4つ目のタブ「設定」追加
+   - アイコン: `LucideIcons.settings`
+
+**動作フロー**:
+```
+設定タブタップ → SettingsScreen表示
+  ↓
+ログアウトボタンタップ → 確認ダイアログ表示
+  ↓
+「ログアウト」タップ → signOut()呼び出し
+  ↓
+app.dart StreamBuilderが検知 → WelcomeScreenへ自動遷移
+```
+
+---
 
 #### 1. ウェルカム画面の追加
 
@@ -395,13 +437,14 @@ class Trainer {
   - [x] 新規登録/ログイン選択画面
   - [x] ログイン認証後のNavigator問題修正
 
-- [ ] **5.5 セッション管理**
+- [x] **5.5 セッション管理** ✅ 完了（2026/02/01）
   - [x] 自動トークンリフレッシュ確認
-  - [ ] **ログアウト機能実装** ← 次のタスク候補
-    - [ ] 設定画面にログアウトボタン追加
-    - [ ] ログアウト確認ダイアログ
-    - [ ] signOut() 呼び出し
-    - [ ] WelcomeScreenへ遷移
+  - [x] **ログアウト機能実装**
+    - [x] 設定画面（SettingsScreen）新規作成
+    - [x] MainScreenに設定タブ追加
+    - [x] ログアウト確認ダイアログ
+    - [x] signOut() 呼び出し
+    - [x] WelcomeScreenへ自動遷移（app.dart StreamBuilder）
 
 **期待される成果**: トレーナーがQRコードを表示 → クライアントがスキャン → メール認証 → 登録完了の全フローが動作 ✅
 
@@ -447,9 +490,8 @@ class Trainer {
 
 | # | タスク | 詳細 | 見積もり |
 |---|--------|------|----------|
-| 1 | **ログアウト機能** | 設定画面にログアウトボタン追加、確認ダイアログ、signOut()呼び出し | 小 |
-| 2 | **メッセージ編集** | 5分以内編集、編集UI、edited_at記録、「編集済み」バッジ | 中 |
-| 3 | **統計カード拡張** | 前回比、期間平均/最高/最低/変動幅（体重記録画面） | 小 |
+| 1 | **メッセージ編集** | 5分以内編集、編集UI、edited_at記録、「編集済み」バッジ | 中 |
+| 2 | **統計カード拡張** | 前回比、期間平均/最高/最低/変動幅（体重記録画面） | 小 |
 
 ### 🟡 高優先（MVP後すぐ）
 
@@ -527,6 +569,12 @@ lib/
 │   │       ├── auth_provider.dart                    # Supabase User直接返却
 │   │       ├── current_user_provider.dart            # trainers参照
 │   │       └── registration_provider.dart            # trainers参照
+│   ├── home/
+│   │   └── presentation/screens/
+│   │       └── main_screen.dart                      # 設定タブ追加
+│   ├── settings/                                     # 新規ディレクトリ
+│   │   └── presentation/screens/
+│   │       └── settings_screen.dart                  # 新規作成（ログアウト機能）
 │   └── messages/
 │       ├── data/
 │       │   └── message_repository.dart               # getMessageById追加
@@ -558,4 +606,4 @@ supabase/
 
 ---
 
-**最終更新**: 2026年2月1日 - リプライ機能実装完了、DBスキーマ変更（profiles→trainers）（v2.3）
+**最終更新**: 2026年2月1日 - ログアウト機能実装完了、設定画面追加（v2.4）
