@@ -21,6 +21,8 @@ class MessageScreen extends ConsumerStatefulWidget {
 
 class _MessageScreenState extends ConsumerState<MessageScreen> {
   final ScrollController _scrollController = ScrollController();
+  String? _replyToMessageId;
+  String? _replyToContent;
 
   @override
   void dispose() {
@@ -28,7 +30,21 @@ class _MessageScreenState extends ConsumerState<MessageScreen> {
     super.dispose();
   }
 
-  Future<void> _sendMessage(String text, List<String>? imageUrls) async {
+  void _setReplyTarget(Message message) {
+    setState(() {
+      _replyToMessageId = message.id;
+      _replyToContent = message.content ?? '';
+    });
+  }
+
+  void _clearReplyTarget() {
+    setState(() {
+      _replyToMessageId = null;
+      _replyToContent = null;
+    });
+  }
+
+  Future<void> _sendMessage(String text, List<String>? imageUrls, String? replyToId) async {
     if (text.trim().isEmpty && (imageUrls == null || imageUrls.isEmpty)) return;
 
     // Parse tags from message
@@ -62,7 +78,9 @@ class _MessageScreenState extends ConsumerState<MessageScreen> {
             content: text,
             imageUrls: imageUrls,
             tags: tags,
+            replyToMessageId: replyToId,
           );
+      _clearReplyTarget();
       // スクロールは messagesAsync.when の data コールバックで自動的に行われる
     } catch (e) {
       if (mounted) {
@@ -126,6 +144,9 @@ class _MessageScreenState extends ConsumerState<MessageScreen> {
             ChatInput(
               onSend: _sendMessage,
               userId: currentUser?.id,
+              replyToMessageId: _replyToMessageId,
+              replyToContent: _replyToContent,
+              onCancelReply: _clearReplyTarget,
             ),
           ],
         ),
@@ -236,6 +257,19 @@ class _MessageScreenState extends ConsumerState<MessageScreen> {
   }
 
   Widget _buildMessageList(List<Message> messages, String? currentUserId) {
+    final trainerProfile = ref.watch(trainerProfileProvider).valueOrNull;
+    final trainerName = trainerProfile?.name ?? 'トレーナー';
+
+    // Helper function to find message by ID
+    Message? findMessageById(String? id) {
+      if (id == null) return null;
+      try {
+        return messages.firstWhere((m) => m.id == id);
+      } catch (_) {
+        return null;
+      }
+    }
+
     // Group messages by date
     final groupedMessages = <String, List<Message>>{};
     for (final message in messages) {
@@ -263,14 +297,22 @@ class _MessageScreenState extends ConsumerState<MessageScreen> {
             _buildDateDivider(date),
             // Messages for this date
             ...dayMessages.map((message) {
+              final replyMessage = findMessageById(message.replyToMessageId);
               final isUser = message.senderId == currentUserId;
+
               return MessageBubble(
                 message: message.content ?? '',
+                messageId: message.id,
                 isUser: isUser,
                 timestamp: DateFormat('HH:mm').format(message.createdAt),
                 tags: message.tags,
                 images: message.imageUrls,
+                replyToContent: replyMessage?.content,
+                replyToSenderName: replyMessage != null
+                    ? (replyMessage.senderId == currentUserId ? '自分' : trainerName)
+                    : null,
                 isSystem: false,
+                onReply: () => _setReplyTarget(message),
               );
             }),
           ],
@@ -338,7 +380,6 @@ Widget previewMessageScreenStatic() {
 class _PreviewMessageScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
-    final now = DateTime.now();
     final mockMessages = [
       _MockMessage(
         content: 'こんにちは！今日の調子はいかがですか？',

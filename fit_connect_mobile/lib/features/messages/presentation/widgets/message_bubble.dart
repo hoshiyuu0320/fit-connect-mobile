@@ -1,5 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/widget_previews.dart';
 import 'package:fit_connect_mobile/core/theme/app_colors.dart';
+import 'package:fit_connect_mobile/core/theme/app_theme.dart';
+import 'package:fit_connect_mobile/features/messages/presentation/widgets/reply_quote.dart';
+import 'package:lucide_icons/lucide_icons.dart';
 
 class MessageBubble extends StatelessWidget {
   final String message;
@@ -8,6 +12,10 @@ class MessageBubble extends StatelessWidget {
   final List<String>? tags;
   final List<String>? images;
   final bool isSystem;
+  final String? messageId;
+  final String? replyToContent;
+  final String? replyToSenderName;
+  final VoidCallback? onReply;
 
   const MessageBubble({
     super.key,
@@ -17,6 +25,10 @@ class MessageBubble extends StatelessWidget {
     this.tags,
     this.images,
     this.isSystem = false,
+    this.messageId,
+    this.replyToContent,
+    this.replyToSenderName,
+    this.onReply,
   });
 
   /// メッセージからタグ部分を除去した本文を取得
@@ -24,6 +36,38 @@ class MessageBubble extends StatelessWidget {
     // タグパターン: #食事:朝食, #運動:筋トレ, #体重 など
     final tagPattern = RegExp(r'#(食事|運動|体重)(?::[^\s]+)?');
     return message.replaceAll(tagPattern, '').trim();
+  }
+
+  /// 長押しメニューを表示
+  void _showContextMenu(BuildContext context) {
+    if (onReply == null) return;
+
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      builder: (context) => Container(
+        margin: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(16),
+        ),
+        child: SafeArea(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              ListTile(
+                leading: Icon(LucideIcons.reply, color: AppColors.primary600),
+                title: const Text('返信'),
+                onTap: () {
+                  Navigator.pop(context);
+                  onReply!();
+                },
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
   }
 
   @override
@@ -52,114 +96,126 @@ class MessageBubble extends StatelessWidget {
 
     final displayMessage = _messageWithoutTags;
 
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 4.0),
-      child: Row(
-        mainAxisAlignment: isUser ? MainAxisAlignment.end : MainAxisAlignment.start,
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          if (!isUser) ...[
-            Container(
-              width: 32,
-              height: 32,
-              margin: const EdgeInsets.only(right: 8, top: 2),
-              decoration: const BoxDecoration(
-                color: AppColors.slate200,
-                shape: BoxShape.circle,
-                image: DecorationImage(
-                  image: NetworkImage('https://picsum.photos/seed/trainer/100/100'),
-                  fit: BoxFit.cover,
+    return GestureDetector(
+      onLongPress: onReply != null ? () => _showContextMenu(context) : null,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 4.0),
+        child: Row(
+          mainAxisAlignment: isUser ? MainAxisAlignment.end : MainAxisAlignment.start,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            if (!isUser) ...[
+              Container(
+                width: 32,
+                height: 32,
+                margin: const EdgeInsets.only(right: 8, top: 2),
+                decoration: const BoxDecoration(
+                  color: AppColors.slate200,
+                  shape: BoxShape.circle,
+                  image: DecorationImage(
+                    image: NetworkImage('https://picsum.photos/seed/trainer/100/100'),
+                    fit: BoxFit.cover,
+                  ),
                 ),
+              ),
+            ],
+
+            Flexible(
+              child: Column(
+                crossAxisAlignment: isUser ? CrossAxisAlignment.end : CrossAxisAlignment.start,
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(14),
+                    decoration: BoxDecoration(
+                      color: isUser ? AppColors.primary600 : Colors.white,
+                      borderRadius: BorderRadius.only(
+                        topLeft: const Radius.circular(16),
+                        topRight: const Radius.circular(16),
+                        bottomLeft: Radius.circular(isUser ? 16 : 4),
+                        bottomRight: Radius.circular(isUser ? 4 : 16),
+                      ),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.05),
+                          blurRadius: 4,
+                          offset: const Offset(0, 2),
+                        ),
+                      ],
+                      border: isUser ? null : Border.all(color: AppColors.slate100),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        // ReplyQuote（返信がある場合に最初に表示）
+                        if (replyToContent != null && replyToSenderName != null) ...[
+                          ReplyQuote(
+                            senderName: replyToSenderName!,
+                            messageContent: replyToContent!,
+                            isUserMessage: isUser,
+                          ),
+                        ],
+
+                        // Tags（先に表示）
+                        if (tags != null && tags!.isNotEmpty) ...[
+                          Wrap(
+                            spacing: 6,
+                            runSpacing: 6,
+                            children: tags!.map((tag) => _buildTag(tag, isUser)).toList(),
+                          ),
+                          if (displayMessage.isNotEmpty) const SizedBox(height: 8),
+                        ],
+
+                        // メッセージ本文（タグを除去して表示）
+                        if (displayMessage.isNotEmpty)
+                          Text(
+                            displayMessage,
+                            style: TextStyle(
+                              color: isUser ? Colors.white : AppColors.slate800,
+                              fontSize: 14,
+                              height: 1.4,
+                            ),
+                          ),
+
+                        // Images
+                        if (images != null && images!.isNotEmpty) ...[
+                          const SizedBox(height: 8),
+                          SizedBox(
+                            height: 100,
+                            child: ListView.separated(
+                              scrollDirection: Axis.horizontal,
+                              shrinkWrap: true,
+                              itemCount: images!.length,
+                              separatorBuilder: (_, __) => const SizedBox(width: 4),
+                              itemBuilder: (context, index) {
+                                return ClipRRect(
+                                  borderRadius: BorderRadius.circular(8),
+                                  child: Image.network(
+                                    images![index],
+                                    width: 100,
+                                    height: 100,
+                                    fit: BoxFit.cover,
+                                  ),
+                                );
+                              },
+                            ),
+                          ),
+                        ],
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    timestamp,
+                    style: const TextStyle(
+                      color: AppColors.slate400,
+                      fontSize: 10,
+                    ),
+                  ),
+                ],
               ),
             ),
           ],
-          
-          Flexible(
-            child: Column(
-              crossAxisAlignment: isUser ? CrossAxisAlignment.end : CrossAxisAlignment.start,
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(14),
-                  decoration: BoxDecoration(
-                    color: isUser ? AppColors.primary600 : Colors.white,
-                    borderRadius: BorderRadius.only(
-                      topLeft: const Radius.circular(16),
-                      topRight: const Radius.circular(16),
-                      bottomLeft: Radius.circular(isUser ? 16 : 4),
-                      bottomRight: Radius.circular(isUser ? 4 : 16),
-                    ),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withOpacity(0.05),
-                        blurRadius: 4,
-                        offset: const Offset(0, 2),
-                      ),
-                    ],
-                    border: isUser ? null : Border.all(color: AppColors.slate100),
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      // Tags（先に表示）
-                      if (tags != null && tags!.isNotEmpty) ...[
-                        Wrap(
-                          spacing: 6,
-                          runSpacing: 6,
-                          children: tags!.map((tag) => _buildTag(tag, isUser)).toList(),
-                        ),
-                        if (displayMessage.isNotEmpty) const SizedBox(height: 8),
-                      ],
-
-                      // メッセージ本文（タグを除去して表示）
-                      if (displayMessage.isNotEmpty)
-                        Text(
-                          displayMessage,
-                          style: TextStyle(
-                            color: isUser ? Colors.white : AppColors.slate800,
-                            fontSize: 14,
-                            height: 1.4,
-                          ),
-                        ),
-                      
-                      // Images
-                      if (images != null && images!.isNotEmpty) ...[
-                        const SizedBox(height: 8),
-                        SizedBox(
-                          height: 100,
-                          child: ListView.separated(
-                            scrollDirection: Axis.horizontal,
-                            shrinkWrap: true,
-                            itemCount: images!.length,
-                            separatorBuilder: (_, __) => const SizedBox(width: 4),
-                            itemBuilder: (context, index) {
-                              return ClipRRect(
-                                borderRadius: BorderRadius.circular(8),
-                                child: Image.network(
-                                  images![index],
-                                  width: 100,
-                                  height: 100,
-                                  fit: BoxFit.cover,
-                                ),
-                              );
-                            },
-                          ),
-                        ),
-                      ],
-                    ],
-                  ),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  timestamp,
-                  style: const TextStyle(
-                    color: AppColors.slate400,
-                    fontSize: 10,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
+        ),
       ),
     );
   }
@@ -211,4 +267,155 @@ class MessageBubble extends StatelessWidget {
 
     return '';
   }
+}
+
+// ============================================
+// Previews
+// ============================================
+
+@Preview(name: 'MessageBubble - User (Basic)')
+Widget previewMessageBubbleUser() {
+  return MaterialApp(
+    theme: AppTheme.lightTheme,
+    home: Scaffold(
+      backgroundColor: AppColors.slate50,
+      body: SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: MessageBubble(
+            message: 'こんにちは！',
+            isUser: true,
+            timestamp: '12:34',
+            onReply: () {},
+          ),
+        ),
+      ),
+    ),
+  );
+}
+
+@Preview(name: 'MessageBubble - Trainer (Basic)')
+Widget previewMessageBubbleTrainer() {
+  return MaterialApp(
+    theme: AppTheme.lightTheme,
+    home: Scaffold(
+      backgroundColor: AppColors.slate50,
+      body: SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: MessageBubble(
+            message: 'トレーニングお疲れ様です！',
+            isUser: false,
+            timestamp: '12:35',
+            onReply: () {},
+          ),
+        ),
+      ),
+    ),
+  );
+}
+
+@Preview(name: 'MessageBubble - With Reply')
+Widget previewMessageBubbleWithReply() {
+  return MaterialApp(
+    theme: AppTheme.lightTheme,
+    home: Scaffold(
+      backgroundColor: AppColors.slate50,
+      body: SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            children: [
+              MessageBubble(
+                message: 'はい、頑張ります！',
+                isUser: true,
+                timestamp: '12:35',
+                replyToContent: '今日のトレーニングお疲れ様でした！',
+                replyToSenderName: 'トレーナー',
+                onReply: () {},
+              ),
+              const SizedBox(height: 16),
+              MessageBubble(
+                message: '明日は筋トレの日ですね',
+                isUser: false,
+                timestamp: '12:36',
+                replyToContent: 'はい、頑張ります！',
+                replyToSenderName: '自分',
+                onReply: () {},
+              ),
+            ],
+          ),
+        ),
+      ),
+    ),
+  );
+}
+
+@Preview(name: 'MessageBubble - With Tags')
+Widget previewMessageBubbleWithTags() {
+  return MaterialApp(
+    theme: AppTheme.lightTheme,
+    home: Scaffold(
+      backgroundColor: AppColors.slate50,
+      body: SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: MessageBubble(
+            message: '#食事:朝食 サラダとゆで卵を食べました',
+            isUser: true,
+            timestamp: '08:30',
+            tags: ['#食事:朝食'],
+            onReply: () {},
+          ),
+        ),
+      ),
+    ),
+  );
+}
+
+@Preview(name: 'MessageBubble - System Message')
+Widget previewMessageBubbleSystem() {
+  return MaterialApp(
+    theme: AppTheme.lightTheme,
+    home: Scaffold(
+      backgroundColor: AppColors.slate50,
+      body: SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: MessageBubble(
+            message: '目標を達成しました！🎉',
+            isUser: false,
+            timestamp: '14:20',
+            isSystem: true,
+          ),
+        ),
+      ),
+    ),
+  );
+}
+
+@Preview(name: 'MessageBubble - With Images')
+Widget previewMessageBubbleWithImages() {
+  return MaterialApp(
+    theme: AppTheme.lightTheme,
+    home: Scaffold(
+      backgroundColor: AppColors.slate50,
+      body: SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: MessageBubble(
+            message: '#食事:昼食 今日のランチです',
+            isUser: true,
+            timestamp: '12:30',
+            tags: ['#食事:昼食'],
+            images: [
+              'https://picsum.photos/seed/lunch1/300/300',
+              'https://picsum.photos/seed/lunch2/300/300',
+            ],
+            onReply: () {},
+          ),
+        ),
+      ),
+    ),
+  );
 }

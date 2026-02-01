@@ -134,4 +134,20 @@ class MessageRepository {
   Future<void> deleteMessage(String messageId) async {
     await _supabase.from('messages').delete().eq('id', messageId);
   }
+
+  /// IDでメッセージを取得
+  Future<Message?> getMessageById(String messageId) async {
+    try {
+      final response = await _supabase
+          .from('messages')
+          .select()
+          .eq('id', messageId)
+          .maybeSingle();
+
+      if (response == null) return null;
+      return Message.fromJson(response);
+    } catch (e) {
+      return null;
+    }
+  }
 }

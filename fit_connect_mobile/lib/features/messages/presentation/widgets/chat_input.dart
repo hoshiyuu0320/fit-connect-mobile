@@ -2,17 +2,24 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:fit_connect_mobile/core/theme/app_colors.dart';
 import 'package:fit_connect_mobile/features/messages/presentation/widgets/tag_suggestion_list.dart';
+import 'package:fit_connect_mobile/features/messages/presentation/widgets/reply_preview.dart';
 import 'package:fit_connect_mobile/services/storage_service.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 
 class ChatInput extends StatefulWidget {
-  final Future<void> Function(String text, List<String>? imageUrls) onSend;
+  final Future<void> Function(String text, List<String>? imageUrls, String? replyToMessageId) onSend;
   final String? userId;
+  final String? replyToMessageId;
+  final String? replyToContent;
+  final VoidCallback? onCancelReply;
 
   const ChatInput({
     super.key,
     required this.onSend,
     this.userId,
+    this.replyToMessageId,
+    this.replyToContent,
+    this.onCancelReply,
   });
 
   @override
@@ -261,7 +268,7 @@ class _ChatInputState extends State<ChatInput> {
 
     // メッセージ送信
     try {
-      await widget.onSend(text, imageUrls);
+      await widget.onSend(text, imageUrls, widget.replyToMessageId);
       _controller.clear();
       setState(() {
         _showSuggestions = false;
@@ -289,6 +296,11 @@ class _ChatInputState extends State<ChatInput> {
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
+        if (widget.replyToContent != null)
+          ReplyPreview(
+            messageContent: widget.replyToContent!,
+            onCancel: widget.onCancelReply ?? () {},
+          ),
         if (_showSuggestions)
           TagSuggestionList(
             query: _currentTagQuery,
