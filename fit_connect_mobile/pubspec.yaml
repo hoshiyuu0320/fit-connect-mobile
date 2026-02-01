@@ -9,10 +9,14 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
+  lucide_icons: ^0.257.0
 
   # 状態管理
   flutter_riverpod: ^2.6.1
   riverpod_annotation: ^2.5.0
+
+  # JSON Serialization
+  json_annotation: ^4.9.0
 
   # Supabase連携
   supabase_flutter: ^2.9.1
@@ -27,8 +31,8 @@ dependencies:
   cached_network_image: ^3.4.1
 
   # QRコード
-  # mobile_scanner: ^5.1.1
-  # qr_flutter: ^4.1.0
+  mobile_scanner: ^7.1.4
+  qr_flutter: ^4.1.0
 
   # Firebase
   firebase_core: ^3.8.1
@@ -44,6 +48,7 @@ dependencies:
   share_plus: ^10.1.1
   path_provider: ^2.1.5
   logger: ^2.5.0
+  uuid: ^4.5.1
 
 dev_dependencies:
   flutter_test:

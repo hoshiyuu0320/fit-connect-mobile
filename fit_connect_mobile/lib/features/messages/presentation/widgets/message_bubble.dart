@@ -1,0 +1,214 @@
+import 'package:flutter/material.dart';
+import 'package:fit_connect_mobile/core/theme/app_colors.dart';
+
+class MessageBubble extends StatelessWidget {
+  final String message;
+  final bool isUser;
+  final String timestamp;
+  final List<String>? tags;
+  final List<String>? images;
+  final bool isSystem;
+
+  const MessageBubble({
+    super.key,
+    required this.message,
+    required this.isUser,
+    required this.timestamp,
+    this.tags,
+    this.images,
+    this.isSystem = false,
+  });
+
+  /// メッセージからタグ部分を除去した本文を取得
+  String get _messageWithoutTags {
+    // タグパターン: #食事:朝食, #運動:筋トレ, #体重 など
+    final tagPattern = RegExp(r'#(食事|運動|体重)(?::[^\s]+)?');
+    return message.replaceAll(tagPattern, '').trim();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (isSystem) {
+      return Center(
+        child: Container(
+          margin: const EdgeInsets.symmetric(vertical: 8),
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+          decoration: BoxDecoration(
+            color: AppColors.amber100,
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(color: AppColors.amber700.withOpacity(0.2)),
+          ),
+          child: Text(
+            message,
+            style: const TextStyle(
+              color: AppColors.amber800,
+              fontSize: 12,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+        ),
+      );
+    }
+
+    final displayMessage = _messageWithoutTags;
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 4.0),
+      child: Row(
+        mainAxisAlignment: isUser ? MainAxisAlignment.end : MainAxisAlignment.start,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          if (!isUser) ...[
+            Container(
+              width: 32,
+              height: 32,
+              margin: const EdgeInsets.only(right: 8, top: 2),
+              decoration: const BoxDecoration(
+                color: AppColors.slate200,
+                shape: BoxShape.circle,
+                image: DecorationImage(
+                  image: NetworkImage('https://picsum.photos/seed/trainer/100/100'),
+                  fit: BoxFit.cover,
+                ),
+              ),
+            ),
+          ],
+          
+          Flexible(
+            child: Column(
+              crossAxisAlignment: isUser ? CrossAxisAlignment.end : CrossAxisAlignment.start,
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(14),
+                  decoration: BoxDecoration(
+                    color: isUser ? AppColors.primary600 : Colors.white,
+                    borderRadius: BorderRadius.only(
+                      topLeft: const Radius.circular(16),
+                      topRight: const Radius.circular(16),
+                      bottomLeft: Radius.circular(isUser ? 16 : 4),
+                      bottomRight: Radius.circular(isUser ? 4 : 16),
+                    ),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.05),
+                        blurRadius: 4,
+                        offset: const Offset(0, 2),
+                      ),
+                    ],
+                    border: isUser ? null : Border.all(color: AppColors.slate100),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // Tags（先に表示）
+                      if (tags != null && tags!.isNotEmpty) ...[
+                        Wrap(
+                          spacing: 6,
+                          runSpacing: 6,
+                          children: tags!.map((tag) => _buildTag(tag, isUser)).toList(),
+                        ),
+                        if (displayMessage.isNotEmpty) const SizedBox(height: 8),
+                      ],
+
+                      // メッセージ本文（タグを除去して表示）
+                      if (displayMessage.isNotEmpty)
+                        Text(
+                          displayMessage,
+                          style: TextStyle(
+                            color: isUser ? Colors.white : AppColors.slate800,
+                            fontSize: 14,
+                            height: 1.4,
+                          ),
+                        ),
+                      
+                      // Images
+                      if (images != null && images!.isNotEmpty) ...[
+                        const SizedBox(height: 8),
+                        SizedBox(
+                          height: 100,
+                          child: ListView.separated(
+                            scrollDirection: Axis.horizontal,
+                            shrinkWrap: true,
+                            itemCount: images!.length,
+                            separatorBuilder: (_, __) => const SizedBox(width: 4),
+                            itemBuilder: (context, index) {
+                              return ClipRRect(
+                                borderRadius: BorderRadius.circular(8),
+                                child: Image.network(
+                                  images![index],
+                                  width: 100,
+                                  height: 100,
+                                  fit: BoxFit.cover,
+                                ),
+                              );
+                            },
+                          ),
+                        ),
+                      ],
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  timestamp,
+                  style: const TextStyle(
+                    color: AppColors.slate400,
+                    fontSize: 10,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildTag(String tag, bool isUser) {
+    String icon = _getTagIcon(tag);
+
+    // タグの表示テキスト（#がなければ追加）
+    final displayTag = tag.startsWith('#') ? tag : '#$tag';
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+      decoration: BoxDecoration(
+        color: isUser ? Colors.white.withOpacity(0.2) : AppColors.primary50,
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Text(
+        icon.isNotEmpty ? '$icon $displayTag' : displayTag,
+        style: TextStyle(
+          color: isUser ? Colors.white : AppColors.primary600,
+          fontSize: 12,
+          fontWeight: FontWeight.w600,
+        ),
+      ),
+    );
+  }
+
+  /// タグに応じたアイコンを取得
+  String _getTagIcon(String tag) {
+    // 食事タグ
+    if (tag.contains('朝食')) return '🌅'; // 朝食
+    if (tag.contains('昼食')) return '☀️'; // 昼食
+    if (tag.contains('夕食') || tag.contains('晩')) return '🌙'; // 夕食
+    if (tag.contains('間食')) return '🍪'; // 間食
+    if (tag.contains('食事')) return '🍽️'; // 食事（詳細なし）
+
+    // 運動タグ
+    if (tag.contains('筋トレ')) return '💪'; // 筋トレ
+    if (tag.contains('有酸素')) return '🏃'; // 有酸素
+    if (tag.contains('ランニング') || tag.contains('走')) return '🏃'; // ランニング
+    if (tag.contains('ウォーキング') || tag.contains('歩')) return '🚶'; // ウォーキング
+    if (tag.contains('自転車') || tag.contains('サイクリング')) return '🚴'; // サイクリング
+    if (tag.contains('水泳') || tag.contains('プール')) return '🏊'; // 水泳
+    if (tag.contains('ヨガ')) return '🧘'; // ヨガ
+    if (tag.contains('運動')) return '🏋️'; // 運動（詳細なし）
+
+    // 体重タグ
+    if (tag.contains('体重')) return '⚖️';
+
+    return '';
+  }
+}

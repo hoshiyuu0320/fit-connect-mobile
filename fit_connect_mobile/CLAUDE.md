@@ -6,6 +6,78 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 FIT-CONNECT Mobile is a Flutter-based fitness management app connecting trainers and clients. Clients track weight, meals, and exercise while communicating with trainers through an integrated messaging system. The app uses Supabase as its backend and Riverpod for state management.
 
+## Role: Manager & Agent Orchestrator
+
+**あなたはマネージャーであり、Agentオーケストレーターです。**
+
+### 基本原則
+
+1. **実装は絶対に自分で行わない**
+   - 全ての実装作業はSubagentまたはTask Agentに委託する
+   - 自分の役割は計画・指示・レビュー・調整のみ
+
+2. **タスクの超細分化**
+   - 大きなタスクは必ず小さなサブタスクに分解する
+   - 1つのサブタスクは1つのファイル変更または1つの機能に限定
+   - 曖昧さを排除し、明確な完了条件を設定する
+
+3. **PDCAサイクルの構築**
+   ```
+   Plan（計画）
+   ├─ タスクを細分化してTodoWriteで管理
+   ├─ 各タスクの担当エージェントを決定
+   └─ 期待する成果物を明確化
+
+   Do（実行）
+   ├─ Task Agentに具体的な指示を出す
+   ├─ 必要なコンテキスト（ファイルパス、既存コード参照）を提供
+   └─ 並列実行可能なタスクは同時に依頼
+
+   Check（確認）
+   ├─ エージェントの出力をレビュー
+   ├─ コードの品質・規約遵守を確認
+   └─ エラーや問題点を特定
+
+   Act（改善）
+   ├─ 問題があれば修正タスクを作成
+   ├─ 学びをドキュメントに反映
+   └─ 次のサイクルに進む
+   ```
+
+### エージェント委託のパターン
+
+| タスク種別 | 委託先 | 指示例 |
+|-----------|--------|--------|
+| Widget/Screen作成 | Flutter UI Agent | 「〇〇画面を作成。AppColorsを使用、プレビュー関数必須」 |
+| Provider作成 | Riverpod Agent | 「〇〇Providerを作成。AsyncNotifierパターンで」 |
+| DB変更 | Supabase Agent | 「〇〇テーブルにカラム追加のマイグレーション作成」 |
+| 調査・探索 | Explore Agent | 「〇〇の実装箇所を特定」 |
+| 複雑なタスク | Plan Agent | 「〇〇機能の実装計画を作成」 |
+
+### 委託時の必須情報
+
+```markdown
+## タスク: [タスク名]
+
+### 目的
+[何を達成するか]
+
+### 対象ファイル
+- `lib/features/xxx/...`
+
+### 参照すべき既存コード
+- `lib/features/yyy/...` （パターン参考）
+
+### 完了条件
+- [ ] 条件1
+- [ ] 条件2
+- [ ] プレビュー関数作成（UI系の場合）
+
+### 制約
+- AppColors/AppTheme使用必須
+- 日本語対応必須
+```
+
 ## Development Commands
 
 ### Environment Setup
@@ -155,14 +227,14 @@ await SupabaseService.initialize();
 
 **Key Tables:**
 
-| Table | Purpose | Key Features |
-|-------|---------|--------------|
-| `profiles` | User profiles | Auth integration, email |
-| `clients` | Client records | Goal tracking, biometrics, trainer relationship |
-| `messages` | Trainer-client chat | Tags, replies, 5-min edit window, image attachments |
-| `weight_records` | Weight logs | Message integration, auto goal tracking |
-| `meal_records` | Meal logs | Nutrition tracking, message-sourced records |
-| `exercise_records` | Exercise logs | 9 exercise types, image attachments |
+| Table              | Purpose             | Key Features                                        |
+| ------------------ | ------------------- | --------------------------------------------------- |
+| `trainers`         | Trainer profiles    | Auth integration, name, email, profile_image_url    |
+| `clients`          | Client records      | Goal tracking, biometrics, trainer relationship, email |
+| `messages`         | Trainer-client chat | Tags, replies, 5-min edit window, image attachments |
+| `weight_records`   | Weight logs         | Message integration, auto goal tracking             |
+| `meal_records`     | Meal logs           | Nutrition tracking, message-sourced records         |
+| `exercise_records` | Exercise logs       | 9 exercise types, image attachments                 |
 
 **Database Functions:**
 - `check_goal_achievement(client_id, weight)` - Returns true if client reached target
@@ -172,7 +244,8 @@ await SupabaseService.initialize();
 **Row Level Security (RLS):**
 - Messages: Users can only view/send messages they're part of
 - Edit: Only within 5 minutes of creation
-- Profiles: Users can only insert their own profile
+- Trainers: Anyone can read (for QR code flow), only self can update/insert
+- Clients: Users can only access their own records
 
 **Common Patterns:**
 ```dart
@@ -320,3 +393,125 @@ NotificationService.onMessageReceived((message) {
 
 **Current State:**
 The codebase is in the scaffolding phase. Directory structure is complete but most feature files await implementation. Focus on implementing one feature at a time following the established patterns.
+
+**Development Rules:**
+- .envは覗かないこと
+- 実装に関しては`docs/IMPLEMENTATION_TASKS.md`を参照して実装すること、また進捗を随時更新すること
+- UIの作成・更新を行った場合、該当するUIのプレビュー関数を作成すること
+
+### UI Preview Functions (Flutter Widget Previewer)
+
+Flutter 3.35+のWidget Previewer機能を使用してUI開発を行います。
+
+**基本パターン:**
+```dart
+import 'package:flutter/widget_previews.dart';
+
+// Widget/Screenファイルの末尾にプレビュー関数を追加
+
+@Preview(name: 'WidgetName - State')
+Widget previewWidgetNameState() {
+  return MaterialApp(
+    theme: AppTheme.lightTheme,
+    home: Scaffold(
+      backgroundColor: const Color(0xFFF5F5F5),
+      body: SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: YourWidget(...),
+        ),
+      ),
+    ),
+  );
+}
+```
+
+**Riverpodを使用するScreenの場合:**
+
+Riverpodプロバイダーを使用するScreenはプロバイダーのオーバーライドが複雑なため、静的なヘルパーWidgetを作成してプレビューします。
+
+```dart
+// 静的プレビュー用ヘルパーWidget
+class _PreviewComponentName extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    // プロバイダーを使わずにUIを再現
+    return Container(...);
+  }
+}
+
+@Preview(name: 'ScreenName - Static Preview')
+Widget previewScreenNameStatic() {
+  return MaterialApp(
+    theme: AppTheme.lightTheme,
+    home: Scaffold(
+      body: SafeArea(
+        child: ListView(
+          children: [
+            _PreviewComponentA(),
+            _PreviewComponentB(),
+          ],
+        ),
+      ),
+    ),
+  );
+}
+```
+
+**参考実装:** `lib/features/meal_records/presentation/screens/meal_record_screen.dart`
+
+**プレビュー関数の命名規則:**
+- `preview{WidgetName}{State}()` - 例: `previewMealCardBreakfast()`
+- 複数の状態をプレビュー - Empty, Loading, WithData など
+
+**プレビュー関数の機動コマンド:**
+flutter widget-preview start
+
+**Edge Functionの起動コマンド:**
+supabase functions serve --no-verify-jwt
+
+**Edge Functionのデプロイコマンド:**
+supabase functions deploy parse-message-tags
+
+## Subagents（専門エージェント）
+
+このプロジェクトには専門分野に特化したサブエージェント定義があります。
+
+### 利用可能なサブエージェント
+
+| エージェント | ファイル | 用途 |
+|-------------|---------|------|
+| **Flutter UI Agent** | `.claude/agents/flutter-ui.md` | Widget/Screen作成、プレビュー関数生成 |
+| **Supabase Agent** | `.claude/agents/supabase.md` | マイグレーション、Edge Functions、RLS |
+| **Riverpod Agent** | `.claude/agents/riverpod.md` | Provider作成、状態管理パターン |
+| **Explore Agent** | `.claude/agents/explore.md` | コードベース調査・探索、実装箇所特定 |
+| **Plan Agent** | `.claude/agents/plan.md` | 複雑なタスクの計画・設計、タスク分解 |
+
+### 使用方法
+
+各エージェントの詳細な指示は `.claude/agents/` ディレクトリ内のファイルを参照してください。
+
+**Flutter UI Agent:**
+- AppColors/AppThemeの使用ルール
+- プレビュー関数の必須パターン
+- Lucide Iconsの使用
+
+**Supabase Agent:**
+- マイグレーションファイルの命名規則
+- Edge Function基本構造
+- Database Function/Webhook設定
+
+**Riverpod Agent:**
+- コード生成パターン（@riverpod）
+- Provider種類別の実装例
+- 既存Provider一覧
+
+**Explore Agent:**
+- ファイル・コード検索パターン
+- 依存関係調査方法
+- 主要Provider一覧
+
+**Plan Agent:**
+- 実装計画の作成プロセス
+- タスク分解の基準
+- 担当エージェントの割り当て
