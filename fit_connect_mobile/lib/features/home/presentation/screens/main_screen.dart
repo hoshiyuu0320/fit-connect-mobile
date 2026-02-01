@@ -4,6 +4,7 @@ import 'package:fit_connect_mobile/core/theme/app_colors.dart';
 import 'package:fit_connect_mobile/features/home/presentation/screens/home_screen.dart';
 import 'package:fit_connect_mobile/features/messages/presentation/screens/message_screen.dart';
 import 'package:fit_connect_mobile/features/home/presentation/screens/records_screen.dart';
+import 'package:fit_connect_mobile/features/settings/presentation/screens/settings_screen.dart';
 import 'package:fit_connect_mobile/features/goals/providers/goal_provider.dart';
 import 'package:fit_connect_mobile/features/goals/providers/goal_achievement_provider.dart';
 import 'package:fit_connect_mobile/features/goals/presentation/widgets/goal_achievement_overlay.dart';
@@ -35,6 +36,7 @@ class _MainScreenState extends ConsumerState<MainScreen> {
     ),
     const MessageScreen(),
     RecordsScreen(initialTabIndex: _recordsTabIndex),
+    const SettingsScreen(),
   ];
 
   @override
@@ -95,6 +97,7 @@ class _MainScreenState extends ConsumerState<MainScreen> {
                     _buildNavItem(0, LucideIcons.home, 'Home'),
                     _buildNavItem(1, LucideIcons.messageSquare, 'Message'),
                     _buildNavItem(2, LucideIcons.barChart2, 'Records'),
+                    _buildNavItem(3, LucideIcons.settings, '設定'),
                   ],
                 ),
               ),

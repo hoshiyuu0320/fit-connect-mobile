@@ -1,0 +1,543 @@
+import 'package:flutter/material.dart';
+import 'package:flutter/widget_previews.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:lucide_icons/lucide_icons.dart';
+import 'package:fit_connect_mobile/core/theme/app_colors.dart';
+import 'package:fit_connect_mobile/core/theme/app_theme.dart';
+import 'package:fit_connect_mobile/features/auth/providers/auth_provider.dart';
+import 'package:fit_connect_mobile/features/auth/providers/current_user_provider.dart';
+
+class SettingsScreen extends ConsumerWidget {
+  const SettingsScreen({super.key});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final clientAsync = ref.watch(currentClientProvider);
+    final trainerAsync = ref.watch(trainerProfileProvider);
+
+    return Scaffold(
+      backgroundColor: AppColors.background,
+      appBar: AppBar(
+        title: const Text('設定'),
+        backgroundColor: Colors.white,
+        elevation: 0,
+        foregroundColor: AppColors.slate800,
+      ),
+      body: SafeArea(
+        child: SingleChildScrollView(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // ユーザー情報セクション
+              _buildUserInfoSection(clientAsync, trainerAsync),
+
+              const SizedBox(height: 16),
+
+              // 設定項目セクション
+              _buildSettingsSection(context, ref),
+
+              const SizedBox(height: 100), // Bottom padding
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildUserInfoSection(
+    AsyncValue clientAsync,
+    AsyncValue trainerAsync,
+  ) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(24),
+      margin: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: AppColors.slate100),
+      ),
+      child: clientAsync.when(
+        data: (client) {
+          if (client == null) {
+            return const Center(
+              child: Text(
+                'ユーザー情報を読み込めませんでした',
+                style: TextStyle(color: AppColors.slate500),
+              ),
+            );
+          }
+
+          return Column(
+            children: [
+              // プロフィール画像
+              CircleAvatar(
+                radius: 40,
+                backgroundColor: AppColors.primary100,
+                backgroundImage: client.profileImageUrl != null
+                    ? NetworkImage(client.profileImageUrl!)
+                    : null,
+                child: client.profileImageUrl == null
+                    ? const Icon(
+                        LucideIcons.user,
+                        size: 40,
+                        color: AppColors.primary500,
+                      )
+                    : null,
+              ),
+
+              const SizedBox(height: 16),
+
+              // クライアント名
+              Text(
+                client.name,
+                style: const TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                  color: AppColors.slate800,
+                ),
+              ),
+
+              const SizedBox(height: 8),
+
+              // メールアドレス
+              if (client.email != null)
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    const Icon(
+                      LucideIcons.mail,
+                      size: 14,
+                      color: AppColors.slate400,
+                    ),
+                    const SizedBox(width: 4),
+                    Text(
+                      client.email!,
+                      style: const TextStyle(
+                        fontSize: 14,
+                        color: AppColors.slate600,
+                      ),
+                    ),
+                  ],
+                ),
+
+              const SizedBox(height: 16),
+
+              // トレーナー情報
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: AppColors.primary50,
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: trainerAsync.when(
+                  data: (trainer) {
+                    if (trainer == null) {
+                      return const Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(
+                            LucideIcons.userCheck,
+                            size: 16,
+                            color: AppColors.primary500,
+                          ),
+                          SizedBox(width: 8),
+                          Text(
+                            'トレーナー: 未設定',
+                            style: TextStyle(
+                              fontSize: 14,
+                              color: AppColors.primary700,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                        ],
+                      );
+                    }
+
+                    return Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        const Icon(
+                          LucideIcons.userCheck,
+                          size: 16,
+                          color: AppColors.primary500,
+                        ),
+                        const SizedBox(width: 8),
+                        Text(
+                          'トレーナー: ${trainer.name}',
+                          style: const TextStyle(
+                            fontSize: 14,
+                            color: AppColors.primary700,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ],
+                    );
+                  },
+                  loading: () => const Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      SizedBox(
+                        width: 14,
+                        height: 14,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          valueColor: AlwaysStoppedAnimation<Color>(
+                            AppColors.primary500,
+                          ),
+                        ),
+                      ),
+                      SizedBox(width: 8),
+                      Text(
+                        '読み込み中...',
+                        style: TextStyle(
+                          fontSize: 14,
+                          color: AppColors.primary700,
+                        ),
+                      ),
+                    ],
+                  ),
+                  error: (_, __) => const Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(
+                        LucideIcons.alertCircle,
+                        size: 16,
+                        color: AppColors.rose800,
+                      ),
+                      SizedBox(width: 8),
+                      Text(
+                        'トレーナー情報の読み込みに失敗',
+                        style: TextStyle(
+                          fontSize: 14,
+                          color: AppColors.rose800,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          );
+        },
+        loading: () => const Center(
+          child: Padding(
+            padding: EdgeInsets.all(32.0),
+            child: CircularProgressIndicator(),
+          ),
+        ),
+        error: (error, _) => Center(
+          child: Column(
+            children: [
+              const Icon(
+                LucideIcons.alertCircle,
+                size: 40,
+                color: AppColors.rose800,
+              ),
+              const SizedBox(height: 8),
+              Text(
+                'エラー: $error',
+                style: const TextStyle(color: AppColors.rose800),
+                textAlign: TextAlign.center,
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSettingsSection(BuildContext context, WidgetRef ref) {
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: AppColors.slate100),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // グループヘッダー
+          const Padding(
+            padding: EdgeInsets.fromLTRB(16, 16, 16, 8),
+            child: Text(
+              'アカウント',
+              style: TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.bold,
+                color: AppColors.slate500,
+                letterSpacing: 0.5,
+              ),
+            ),
+          ),
+
+          // ログアウトボタン
+          ListTile(
+            leading: Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: AppColors.rose100,
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: const Icon(
+                LucideIcons.logOut,
+                size: 20,
+                color: AppColors.rose800,
+              ),
+            ),
+            title: const Text(
+              'ログアウト',
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.w500,
+                color: AppColors.rose800,
+              ),
+            ),
+            trailing: const Icon(
+              LucideIcons.chevronRight,
+              size: 20,
+              color: AppColors.slate400,
+            ),
+            onTap: () => _showLogoutDialog(context, ref),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showLogoutDialog(BuildContext context, WidgetRef ref) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('ログアウト'),
+        content: const Text('ログアウトしますか？'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text(
+              'キャンセル',
+              style: TextStyle(color: AppColors.slate600),
+            ),
+          ),
+          TextButton(
+            onPressed: () async {
+              Navigator.of(context).pop(); // ダイアログを閉じる
+              try {
+                await ref.read(authNotifierProvider.notifier).signOut();
+                // ルーティングはapp.dartのStreamBuilderが自動処理
+              } catch (e) {
+                if (context.mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text('ログアウトに失敗しました: $e'),
+                      backgroundColor: AppColors.rose800,
+                    ),
+                  );
+                }
+              }
+            },
+            child: const Text(
+              'ログアウト',
+              style: TextStyle(
+                color: AppColors.rose800,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// ============================================
+// Previews
+// ============================================
+
+@Preview(name: 'SettingsScreen - Static Preview')
+Widget previewSettingsScreenStatic() {
+  return MaterialApp(
+    theme: AppTheme.lightTheme,
+    home: Scaffold(
+      backgroundColor: AppColors.background,
+      appBar: AppBar(
+        title: const Text('設定'),
+        backgroundColor: Colors.white,
+        elevation: 0,
+        foregroundColor: AppColors.slate800,
+      ),
+      body: SafeArea(
+        child: SingleChildScrollView(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              _PreviewUserInfoSection(),
+              const SizedBox(height: 16),
+              _PreviewSettingsSection(),
+            ],
+          ),
+        ),
+      ),
+    ),
+  );
+}
+
+// Preview helper widgets
+class _PreviewUserInfoSection extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(24),
+      margin: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: AppColors.slate100),
+      ),
+      child: Column(
+        children: [
+          // プロフィール画像
+          const CircleAvatar(
+            radius: 40,
+            backgroundColor: AppColors.primary100,
+            child: Icon(
+              LucideIcons.user,
+              size: 40,
+              color: AppColors.primary500,
+            ),
+          ),
+
+          const SizedBox(height: 16),
+
+          // クライアント名
+          const Text(
+            '山田 太郎',
+            style: TextStyle(
+              fontSize: 20,
+              fontWeight: FontWeight.bold,
+              color: AppColors.slate800,
+            ),
+          ),
+
+          const SizedBox(height: 8),
+
+          // メールアドレス
+          const Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(
+                LucideIcons.mail,
+                size: 14,
+                color: AppColors.slate400,
+              ),
+              SizedBox(width: 4),
+              Text(
+                'yamada@example.com',
+                style: TextStyle(
+                  fontSize: 14,
+                  color: AppColors.slate600,
+                ),
+              ),
+            ],
+          ),
+
+          const SizedBox(height: 16),
+
+          // トレーナー情報
+          Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: AppColors.primary50,
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: const Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(
+                  LucideIcons.userCheck,
+                  size: 16,
+                  color: AppColors.primary500,
+                ),
+                SizedBox(width: 8),
+                Text(
+                  'トレーナー: 鈴木コーチ',
+                  style: TextStyle(
+                    fontSize: 14,
+                    color: AppColors.primary700,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _PreviewSettingsSection extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: AppColors.slate100),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // グループヘッダー
+          const Padding(
+            padding: EdgeInsets.fromLTRB(16, 16, 16, 8),
+            child: Text(
+              'アカウント',
+              style: TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.bold,
+                color: AppColors.slate500,
+                letterSpacing: 0.5,
+              ),
+            ),
+          ),
+
+          // ログアウトボタン
+          ListTile(
+            leading: Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: AppColors.rose100,
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: const Icon(
+                LucideIcons.logOut,
+                size: 20,
+                color: AppColors.rose800,
+              ),
+            ),
+            title: const Text(
+              'ログアウト',
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.w500,
+                color: AppColors.rose800,
+              ),
+            ),
+            trailing: const Icon(
+              LucideIcons.chevronRight,
+              size: 20,
+              color: AppColors.slate400,
+            ),
+            onTap: () {
+              // プレビューでは何もしない
+            },
+          ),
+        ],
+      ),
+    );
+  }
+}
