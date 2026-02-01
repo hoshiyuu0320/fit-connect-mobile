@@ -111,3 +111,10 @@ Future<int> unreadMessageCount(UnreadMessageCountRef ref) async {
   final repository = ref.watch(messageRepositoryProvider);
   return repository.getUnreadCount(userId: user.id);
 }
+
+/// 特定のメッセージをIDで取得するProvider
+@riverpod
+Future<Message?> messageById(MessageByIdRef ref, String messageId) async {
+  final repository = ref.watch(messageRepositoryProvider);
+  return repository.getMessageById(messageId);
+}
