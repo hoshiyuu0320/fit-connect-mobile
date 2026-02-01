@@ -9,6 +9,7 @@ part of 'client_model.dart';
 Client _$ClientFromJson(Map<String, dynamic> json) => Client(
       clientId: json['client_id'] as String,
       name: json['name'] as String,
+      email: json['email'] as String?,
       trainerId: json['trainer_id'] as String,
       gender: json['gender'] as String?,
       age: (json['age'] as num?)?.toInt(),
@@ -30,6 +31,7 @@ Client _$ClientFromJson(Map<String, dynamic> json) => Client(
 Map<String, dynamic> _$ClientToJson(Client instance) => <String, dynamic>{
       'client_id': instance.clientId,
       'name': instance.name,
+      'email': instance.email,
       'trainer_id': instance.trainerId,
       'gender': instance.gender,
       'age': instance.age,

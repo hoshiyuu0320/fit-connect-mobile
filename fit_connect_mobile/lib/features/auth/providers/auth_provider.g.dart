@@ -44,14 +44,15 @@ final isAuthenticatedProvider = AutoDisposeProvider<bool>.internal(
 @Deprecated('Will be removed in 3.0. Use Ref instead')
 // ignore: unused_element
 typedef IsAuthenticatedRef = AutoDisposeProviderRef<bool>;
-String _$authNotifierHash() => r'a57e8edef5bc55e25211b8d4a48550c283d4d2ee';
+String _$authNotifierHash() => r'5fc9a8f2f05855fa0d4dd8eabd2cf61a1f2294eb';
 
 /// 認証状態を管理するProvider
+/// 注意: プロフィール情報はcurrentClientProvider/trainerProfileProviderを使用
 ///
 /// Copied from [AuthNotifier].
 @ProviderFor(AuthNotifier)
 final authNotifierProvider =
-    AutoDisposeAsyncNotifierProvider<AuthNotifier, app.User?>.internal(
+    AutoDisposeAsyncNotifierProvider<AuthNotifier, supabase.User?>.internal(
   AuthNotifier.new,
   name: r'authNotifierProvider',
   debugGetCreateSourceHash:
@@ -60,6 +61,6 @@ final authNotifierProvider =
   allTransitiveDependencies: null,
 );
 
-typedef _$AuthNotifier = AutoDisposeAsyncNotifier<app.User?>;
+typedef _$AuthNotifier = AutoDisposeAsyncNotifier<supabase.User?>;
 // ignore_for_file: type=lint
 // ignore_for_file: subtype_of_sealed_class, invalid_use_of_internal_member, invalid_use_of_visible_for_testing_member, deprecated_member_use_from_same_package

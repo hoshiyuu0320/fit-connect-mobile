@@ -63,14 +63,13 @@ final currentTrainerIdProvider = AutoDisposeProvider<String?>.internal(
 @Deprecated('Will be removed in 3.0. Use Ref instead')
 // ignore: unused_element
 typedef CurrentTrainerIdRef = AutoDisposeProviderRef<String?>;
-String _$trainerProfileHash() => r'1a47e740b674174ecd6847c651c6e42953b495be';
+String _$trainerProfileHash() => r'576747f36d971cbcd9a849a038e593fddf4f7a8e';
 
 /// トレーナーのプロフィール情報を取得するProvider
 ///
 /// Copied from [trainerProfile].
 @ProviderFor(trainerProfile)
-final trainerProfileProvider =
-    AutoDisposeFutureProvider<Map<String, dynamic>?>.internal(
+final trainerProfileProvider = AutoDisposeFutureProvider<Trainer?>.internal(
   trainerProfile,
   name: r'trainerProfileProvider',
   debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
@@ -82,6 +81,6 @@ final trainerProfileProvider =
 
 @Deprecated('Will be removed in 3.0. Use Ref instead')
 // ignore: unused_element
-typedef TrainerProfileRef = AutoDisposeFutureProviderRef<Map<String, dynamic>?>;
+typedef TrainerProfileRef = AutoDisposeFutureProviderRef<Trainer?>;
 // ignore_for_file: type=lint
 // ignore_for_file: subtype_of_sealed_class, invalid_use_of_internal_member, invalid_use_of_visible_for_testing_member, deprecated_member_use_from_same_package

@@ -57,13 +57,12 @@ class RegistrationNotifier extends _$RegistrationNotifier {
     try {
       print('[fetchTrainerInfo] trainerId: $trainerId');
       print(
-          "[fetchTrainerInfo] Query: SELECT id, name, profile_image_url FROM profiles WHERE id = '$trainerId' AND role = 'trainer'");
+          "[fetchTrainerInfo] Query: SELECT id, name, profile_image_url FROM trainers WHERE id = '$trainerId'");
 
       final response = await SupabaseService.client
-          .from('profiles')
+          .from('trainers')
           .select('id, name, profile_image_url')
           .eq('id', trainerId)
-          // .eq('role', 'trainer')
           .maybeSingle();
 
       print('[fetchTrainerInfo] response: $response');
@@ -95,12 +94,6 @@ class RegistrationNotifier extends _$RegistrationNotifier {
     if (userId == null) {
       throw Exception('User not authenticated');
     }
-
-    // profilesテーブルにレコード作成（存在しない場合）
-    await SupabaseService.client.from('profiles').upsert({
-      'id': userId,
-      'role': 'client',
-    });
 
     // clientsテーブルにレコード作成
     await SupabaseService.client.from('clients').insert({

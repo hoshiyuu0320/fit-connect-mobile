@@ -229,8 +229,8 @@ await SupabaseService.initialize();
 
 | Table              | Purpose             | Key Features                                        |
 | ------------------ | ------------------- | --------------------------------------------------- |
-| `profiles`         | User profiles       | Auth integration, email                             |
-| `clients`          | Client records      | Goal tracking, biometrics, trainer relationship     |
+| `trainers`         | Trainer profiles    | Auth integration, name, email, profile_image_url    |
+| `clients`          | Client records      | Goal tracking, biometrics, trainer relationship, email |
 | `messages`         | Trainer-client chat | Tags, replies, 5-min edit window, image attachments |
 | `weight_records`   | Weight logs         | Message integration, auto goal tracking             |
 | `meal_records`     | Meal logs           | Nutrition tracking, message-sourced records         |
@@ -244,7 +244,8 @@ await SupabaseService.initialize();
 **Row Level Security (RLS):**
 - Messages: Users can only view/send messages they're part of
 - Edit: Only within 5 minutes of creation
-- Profiles: Users can only insert their own profile
+- Trainers: Anyone can read (for QR code flow), only self can update/insert
+- Clients: Users can only access their own records
 
 **Common Patterns:**
 ```dart

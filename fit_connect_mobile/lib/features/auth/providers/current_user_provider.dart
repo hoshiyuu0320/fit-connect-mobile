@@ -1,6 +1,7 @@
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:fit_connect_mobile/services/supabase_service.dart';
 import 'package:fit_connect_mobile/features/auth/models/client_model.dart';
+import 'package:fit_connect_mobile/features/auth/models/trainer_model.dart';
 import 'package:fit_connect_mobile/features/auth/providers/auth_provider.dart';
 
 part 'current_user_provider.g.dart';
@@ -52,7 +53,7 @@ String? currentTrainerId(CurrentTrainerIdRef ref) {
 
 /// トレーナーのプロフィール情報を取得するProvider
 @riverpod
-Future<Map<String, dynamic>?> trainerProfile(TrainerProfileRef ref) async {
+Future<Trainer?> trainerProfile(TrainerProfileRef ref) async {
   // currentClientProviderを直接watchしてtrainer_idを取得
   final client = await ref.watch(currentClientProvider.future);
   final trainerId = client?.trainerId;
@@ -62,12 +63,13 @@ Future<Map<String, dynamic>?> trainerProfile(TrainerProfileRef ref) async {
 
   try {
     final response = await SupabaseService.client
-        .from('profiles')
+        .from('trainers')
         .select()
         .eq('id', trainerId)
         .maybeSingle();
     print('[DEBUG] trainerProfileProvider: response = $response');
-    return response;
+    if (response == null) return null;
+    return Trainer.fromJson(response);
   } catch (e) {
     print('[DEBUG] trainerProfileProvider: error = $e');
     return null;

@@ -1,17 +1,18 @@
 import 'package:riverpod_annotation/riverpod_annotation.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:supabase_flutter/supabase_flutter.dart' hide User;
+import 'package:supabase_flutter/supabase_flutter.dart' as supabase show User;
 import 'package:fit_connect_mobile/services/supabase_service.dart';
-import 'package:fit_connect_mobile/features/auth/models/user_model.dart' as app;
 
 part 'auth_provider.g.dart';
 
 /// 認証状態を管理するProvider
+/// 注意: プロフィール情報はcurrentClientProvider/trainerProfileProviderを使用
 @riverpod
 class AuthNotifier extends _$AuthNotifier {
   String? _lastUserId;
 
   @override
-  Future<app.User?> build() async {
+  Future<supabase.User?> build() async {
     // 現在のユーザーIDを記録（変更検知用）
     final currentUserId = SupabaseService.client.auth.currentUser?.id;
     _lastUserId = currentUserId;
@@ -39,37 +40,8 @@ class AuthNotifier extends _$AuthNotifier {
       subscription.cancel();
     });
 
-    return _fetchCurrentUser();
-  }
-
-  /// 現在のユーザー情報を取得
-  Future<app.User?> _fetchCurrentUser() async {
-    print('[DEBUG] _fetchCurrentUser: 開始');
-
-    // currentUserを使用（セッション復元後は正しい値が返される）
-    final user = SupabaseService.client.auth.currentUser;
-    print('[DEBUG] _fetchCurrentUser: currentUser = $user, id = ${user?.id}');
-
-    if (user == null) {
-      print('[DEBUG] _fetchCurrentUser: user is null, returning null');
-      return null;
-    }
-
-    try {
-      print('[DEBUG] _fetchCurrentUser: fetching profile...');
-      final response = await SupabaseService.client
-          .from('profiles')
-          .select()
-          .eq('id', user.id)
-          .maybeSingle();
-
-      print('[DEBUG] _fetchCurrentUser: response = $response');
-      if (response == null) return null;
-      return app.User.fromJson(response);
-    } catch (e) {
-      print('[DEBUG] _fetchCurrentUser: error = $e');
-      return null;
-    }
+    // Supabase認証ユーザーを返す（プロフィール情報は別Providerで取得）
+    return SupabaseService.client.auth.currentUser;
   }
 
   /// メールアドレスでマジックリンク認証
@@ -83,24 +55,6 @@ class AuthNotifier extends _$AuthNotifier {
   /// サインアウト
   Future<void> signOut() async {
     await SupabaseService.client.auth.signOut();
-  }
-
-  /// プロフィールを作成（初回登録時）
-  Future<void> createProfile({
-    required String name,
-    String? email,
-  }) async {
-    final userId = SupabaseService.client.auth.currentUser?.id;
-    if (userId == null) throw Exception('User not authenticated');
-
-    await SupabaseService.client.from('profiles').insert({
-      'id': userId,
-      'name': name,
-      'email': email,
-      'role': 'client',
-    });
-
-    ref.invalidateSelf();
   }
 }
 

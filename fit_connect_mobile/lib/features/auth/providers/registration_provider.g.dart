@@ -7,7 +7,7 @@ part of 'registration_provider.dart';
 // **************************************************************************
 
 String _$registrationNotifierHash() =>
-    r'e985d0a8647fe853138b2a1cab5cfa57c9812d9b';
+    r'505a0daa95172c35d4dc7a7728862c3a58ee4a35';
 
 /// 登録フロー中の状態を管理するProvider
 ///

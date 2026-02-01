@@ -8,6 +8,7 @@ class Client {
   @JsonKey(name: 'client_id')
   final String clientId;
   final String name;
+  final String? email;
   @JsonKey(name: 'trainer_id')
   final String trainerId;
   final String? gender; // 'male' | 'female' | 'other'
@@ -37,6 +38,7 @@ class Client {
   const Client({
     required this.clientId,
     required this.name,
+    this.email,
     required this.trainerId,
     this.gender,
     this.age,
@@ -57,6 +59,7 @@ class Client {
   Client copyWith({
     String? clientId,
     String? name,
+    String? email,
     String? trainerId,
     String? gender,
     int? age,
@@ -73,6 +76,7 @@ class Client {
     return Client(
       clientId: clientId ?? this.clientId,
       name: name ?? this.name,
+      email: email ?? this.email,
       trainerId: trainerId ?? this.trainerId,
       gender: gender ?? this.gender,
       age: age ?? this.age,

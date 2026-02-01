@@ -134,9 +134,8 @@
 
 ```sql
 -- 認証完了後の処理
-1. profiles テーブルに role='client' で作成
-2. clients テーブルに trainer_id と紐付けて作成
-3. ホーム画面へ遷移
+1. clients テーブルに trainer_id と紐付けて作成
+2. ホーム画面へ遷移
 ```
 
 ---
@@ -607,12 +606,15 @@ WITH CHECK (client_id = auth.uid());
 
 ### 6.1 既存テーブル
 
-#### profiles
+#### trainers
 ```sql
-profiles (
+trainers (
   id UUID PRIMARY KEY,
-  name TEXT,
-  role TEXT -- 'trainer' | 'client'
+  name TEXT NOT NULL,
+  email TEXT,
+  profile_image_url TEXT,
+  created_at TIMESTAMPTZ,
+  updated_at TIMESTAMPTZ
 )
 ```
 
@@ -621,7 +623,8 @@ profiles (
 clients (
   client_id UUID PRIMARY KEY,
   name TEXT,
-  trainer_id UUID REFERENCES profiles(id),
+  email TEXT, -- クライアントのメールアドレス
+  trainer_id UUID REFERENCES trainers(id),
   gender TEXT,
   age INTEGER,
   height NUMERIC,

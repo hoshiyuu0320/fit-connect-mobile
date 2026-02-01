@@ -81,7 +81,7 @@ class _MessageScreenState extends ConsumerState<MessageScreen> {
     final messagesAsync = ref.watch(messagesStreamProvider);
     final currentUser = ref.watch(authNotifierProvider).valueOrNull;
     final trainerProfile = ref.watch(trainerProfileProvider).valueOrNull;
-    final trainerName = trainerProfile?['name'] as String? ?? 'トレーナー';
+    final trainerName = trainerProfile?.name ?? 'トレーナー';
 
     return GestureDetector(
       onTap: () => FocusScope.of(context).unfocus(),
